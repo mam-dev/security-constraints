@@ -93,4 +93,4 @@ waitress!=1.4.2  # CVE-2020-5236 (ID: GHSA-73m2-3pwg-5fgc)
 Pull requests as well as new issues are welcome.
 
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
-![example workflow](https://github.com/mam-dev/security-constraints/actions/workflows/ci.yml/badge.svg)
+[![CI](https://github.com/mam-dev/security-constraints/actions/workflows/ci.yaml/badge.svg?branch=main)](https://github.com/mam-dev/security-constraints/actions/workflows/ci.yaml)
