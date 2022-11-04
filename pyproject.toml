@@ -1,0 +1,61 @@
+[project]
+name = "security-constraints"
+version = "1.0.0"
+description = "Fetches security vulnerabilities and creates pip-constraints based on them."
+readme = "README.md"
+license = {file = "LICENSE"}
+requires-python = ">=3.7"
+dependencies = [
+    "requests",
+    "pyyaml",
+    "importlib-metadata >= 1.0 ; python_version < '3.8'"
+]
+
+[project.optional-dependencies]
+test = [
+    "pytest",
+    "requests-mock",
+    "freezegun"
+]
+lint = [
+    "isort",
+    "black",
+    "flake8",
+    "mypy",
+    "types-requests",
+    "types-PyYAML"
+]
+
+[project.scripts]
+security-constraints = "security_constraints.main:main"
+
+[build-system]
+requires = ["setuptools>=51", "wheel", "setuptools_scm[toml]>=6.2"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools_scm]
+
+[tool.setuptools.packages.find]
+where = ["src"]
+namespaces = false
+
+[tool.isort]
+profile = "black"
+src_paths = ["src", "test"]
+
+[tool.pytest.ini_options]
+minversion = "6.0"
+usefixtures = ["requests_mock"]
+testpaths = ["test"]
+
+[tool.mypy]
+warn_return_any = true
+warn_unused_configs = true
+warn_unused_ignores = true
+warn_redundant_casts = true
+warn_unreachable = true
+files = ["src", "test"]
+
+[[tool.mypy.overrides]]
+module = 'py'
+ignore_missing_imports = true
