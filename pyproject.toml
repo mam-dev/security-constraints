@@ -1,5 +1,6 @@
 [project]
 name = "security-constraints"
+version = "1.0.0"
 description = "Fetches security vulnerabilities and creates pip-constraints based on them."
 readme = "README.md"
 license = {file = "LICENSE"}
