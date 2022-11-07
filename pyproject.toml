@@ -1,6 +1,5 @@
 [project]
 name = "security-constraints"
-version = "1.0.0"
 description = "Fetches security vulnerabilities and creates pip-constraints based on them."
 readme = "README.md"
 license = {file = "LICENSE"}
@@ -10,21 +9,7 @@ dependencies = [
     "pyyaml",
     "importlib-metadata >= 1.0 ; python_version < '3.8'"
 ]
-
-[project.optional-dependencies]
-test = [
-    "pytest",
-    "requests-mock",
-    "freezegun"
-]
-lint = [
-    "isort",
-    "black",
-    "flake8",
-    "mypy",
-    "types-requests",
-    "types-PyYAML"
-]
+dynamic = ["version"]
 
 [project.scripts]
 security-constraints = "security_constraints.main:main"
