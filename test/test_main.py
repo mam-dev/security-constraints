@@ -76,7 +76,7 @@ def test_get_security_vulnerability_database_apis(monkeypatch) -> None:
                 package="pystuff",
                 vulnerable_range=">= 4.3.0, < 4.3.5",
             ),
-            PackageConstraints(package="pystuff", specifiers=["<4.3.0", ">=4.3.5"]),
+            PackageConstraints(package="pystuff", specifiers=[">=4.3.5"]),
         ),
         (
             SecurityVulnerability(

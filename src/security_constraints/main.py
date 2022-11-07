@@ -71,16 +71,25 @@ def get_safe_version_constraints(
 
     """
     safe_specs: List[str] = []
-    vulnerable_specs = [p.strip() for p in vulnerability.vulnerable_range.split(",")]
-    for vulnerable_spec in vulnerable_specs:
-        if vulnerable_spec.startswith("= "):
-            safe_specs.append(f"!={vulnerable_spec[2:]}")
-        elif vulnerable_spec.startswith("<= "):
-            safe_specs.append(f">{vulnerable_spec[3:]}")
-        elif vulnerable_spec.startswith("< "):
-            safe_specs.append(f">={vulnerable_spec[2:]}")
-        elif vulnerable_spec.startswith(">= "):
-            safe_specs.append(f"<{vulnerable_spec[3:]}")
+    vulnerable_spec: str
+    if "," in vulnerability.vulnerable_range:
+        # If there is a known min and max affected version, make the constraints
+        # just specify the minimum safe version, since min and max constraints cannot
+        # be met at the same time.
+        vulnerable_spec = [
+            p.strip() for p in vulnerability.vulnerable_range.split(",")
+        ][-1]
+    else:
+        vulnerable_spec = vulnerability.vulnerable_range.strip()
+
+    if vulnerable_spec.startswith("= "):
+        safe_specs.append(f"!={vulnerable_spec[2:]}")
+    elif vulnerable_spec.startswith("<= "):
+        safe_specs.append(f">{vulnerable_spec[3:]}")
+    elif vulnerable_spec.startswith("< "):
+        safe_specs.append(f">={vulnerable_spec[2:]}")
+    elif vulnerable_spec.startswith(">= "):
+        safe_specs.append(f"<{vulnerable_spec[3:]}")
     return PackageConstraints(
         package=vulnerability.package,
         specifiers=safe_specs,
