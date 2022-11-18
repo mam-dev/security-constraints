@@ -3,6 +3,7 @@ name = "security-constraints"
 description = "Fetches security vulnerabilities and creates pip-constraints based on them."
 readme = "README.md"
 license = {file = "LICENSE"}
+urls = ["https://github.com/mam-dev/security-constraints"]
 requires-python = ">=3.7"
 dependencies = [
     "requests",
