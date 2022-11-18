@@ -123,7 +123,7 @@ def create_header(
     apis: Sequence[SecurityVulnerabilityDatabaseAPI], config: Configuration
 ) -> str:
     """Create the comment header which goes at the top of the output."""
-    timestamp: str = datetime.utcnow().isoformat()
+    timestamp: str = f"{datetime.utcnow().isoformat()}Z"
     sources: List[str] = [api.get_database_name() for api in apis]
     app_name: str = "security-constraints"
     lines: List[str] = [
