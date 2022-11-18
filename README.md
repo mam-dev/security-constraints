@@ -29,7 +29,7 @@ output safe pip constraints to stdout.
 # Data sources: Github Security Advisory
 # Configuration: {'ignore_ids': []}
 ...
-vncauthproxy<0,>=1.2.0  # CVE-2022-36436 (ID: GHSA-237r-mx84-7x8c)
+vncauthproxy>=1.2.0  # CVE-2022-36436 (ID: GHSA-237r-mx84-7x8c)
 waitress!=1.4.2  # CVE-2020-5236 (ID: GHSA-73m2-3pwg-5fgc)
 waitress>=1.4.0  # GHSA-4ppp-gpcr-7qf6 (ID: GHSA-4ppp-gpcr-7qf6)
 ymlref>0.1.1  # CVE-2018-20133 (ID: GHSA-8r8j-xvfj-36f9)
@@ -45,7 +45,7 @@ You can use `--output` to instead output to a file.
 # Data sources: Github Security Advisory
 # Configuration: {'ignore_ids': []}
 ...
-vncauthproxy<0,>=1.2.0  # CVE-2022-36436 (ID: GHSA-237r-mx84-7x8c)
+vncauthproxy>=1.2.0  # CVE-2022-36436 (ID: GHSA-237r-mx84-7x8c)
 waitress!=1.4.2  # CVE-2020-5236 (ID: GHSA-73m2-3pwg-5fgc)
 waitress>=1.4.0  # GHSA-4ppp-gpcr-7qf6 (ID: GHSA-4ppp-gpcr-7qf6)
 ymlref>0.1.1  # CVE-2018-20133 (ID: GHSA-8r8j-xvfj-36f9)
@@ -62,7 +62,7 @@ should be ignored. The IDs in question are those that appear in after
 # Data sources: Github Security Advisory
 # Configuration: {'ignore_ids': ['GHSA-4ppp-gpcr-7qf6', 'GHSA-8r8j-xvfj-36f9']}
 ...
-vncauthproxy<0,>=1.2.0  # CVE-2022-36436 (ID: GHSA-237r-mx84-7x8c)
+vncauthproxy>=1.2.0  # CVE-2022-36436 (ID: GHSA-237r-mx84-7x8c)
 waitress!=1.4.2  # CVE-2020-5236 (ID: GHSA-73m2-3pwg-5fgc)
 >
 ```
@@ -84,7 +84,7 @@ ignore_ids:
 # Data sources: Github Security Advisory
 # Configuration: {'ignore_ids': ['GHSA-4ppp-gpcr-7qf6', 'GHSA-8r8j-xvfj-36f9']}
 ...
-vncauthproxy<0,>=1.2.0  # CVE-2022-36436 (ID: GHSA-237r-mx84-7x8c)
+vncauthproxy>=1.2.0  # CVE-2022-36436 (ID: GHSA-237r-mx84-7x8c)
 waitress!=1.4.2  # CVE-2020-5236 (ID: GHSA-73m2-3pwg-5fgc)
 >
 ```
