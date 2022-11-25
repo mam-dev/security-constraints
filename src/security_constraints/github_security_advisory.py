@@ -15,13 +15,12 @@ from security_constraints.common import (
 
 LOGGER = logging.getLogger(__name__)
 
-
 QUERY_TEMPLATE = string.Template(
     "{"
     "securityVulnerabilities("
     " first: $first"
     " ecosystem:PIP"
-    " severities:$severities"
+    " severities:[$severities]"
     " $additional"
     ") {"
     "    totalCount"
@@ -50,7 +49,11 @@ class GithubSecurityAdvisoryAPI(SecurityVulnerabilityDatabaseAPI):
 
     URL = "https://api.github.com/graphql"
 
-    def __init__(self):
+    def __init__(self, severities: Optional[List[str]] = None) -> None:
+        if severities is None:
+            self.severities = ["CRITICAL"]
+        else:
+            self.severities = severities
         self._session = requests.Session()
         self._current_cursor: Optional[str] = None
         try:
@@ -68,7 +71,7 @@ class GithubSecurityAdvisoryAPI(SecurityVulnerabilityDatabaseAPI):
         more_data_exists = True
         while more_data_exists:
             json_response: Dict = self._do_graphql_request(
-                severities=["CRITICAL"], after=after
+                severities=self.severities, after=after
             )
             try:
                 json_data: Dict = json_response["data"]
