@@ -9,7 +9,7 @@ if sys.version_info >= (3, 8):
 else:
     from importlib_metadata import version
 
-from typing import IO, Any, List, Optional, Sequence
+from typing import IO, List, Optional, Sequence
 
 import yaml
 
