@@ -1,7 +1,20 @@
 """This module contains common definitions for use in any other module."""
 import abc
+import argparse
 import dataclasses
-from typing import Dict, List
+from typing import IO, Dict, List, Optional
+
+
+class ArgumentNamespace(argparse.Namespace):
+    """Namespace for arguments."""
+
+    dump_config: bool
+    debug: bool
+    version: bool
+    output: Optional[IO]
+    ignore_ids: List[str]
+    config: Optional[str]
+    severities: List[str]
 
 
 class SecurityConstraintsError(Exception):
@@ -25,6 +38,7 @@ class Configuration:
     """
 
     ignore_ids: List[str] = dataclasses.field(default_factory=list)
+    severities: List[str] = dataclasses.field(default_factory=list)
 
     def to_dict(self) -> Dict:
         return dataclasses.asdict(self)
