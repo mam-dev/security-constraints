@@ -9,11 +9,12 @@ if sys.version_info >= (3, 8):
 else:
     from importlib_metadata import version
 
-from typing import IO, Any, List, Optional, Sequence
+from typing import IO, List, Optional, Sequence
 
 import yaml
 
 from security_constraints.common import (
+    ArgumentNamespace,
     Configuration,
     PackageConstraints,
     SecurityConstraintsError,
@@ -25,11 +26,11 @@ from security_constraints.github_security_advisory import GithubSecurityAdvisory
 LOGGER = logging.getLogger(__name__)
 
 
-def get_security_vulnerability_database_apis() -> List[
-    SecurityVulnerabilityDatabaseAPI
-]:
+def get_security_vulnerability_database_apis(
+    severities: Optional[List[str]] = None,
+) -> List[SecurityVulnerabilityDatabaseAPI]:
     """Return the APIs to use for fetching vulnerabilities."""
-    return [GithubSecurityAdvisoryAPI()]
+    return [GithubSecurityAdvisoryAPI(severities=severities)]
 
 
 def fetch_vulnerabilities(
@@ -152,7 +153,7 @@ def format_constraints_file_line(
     return f"{constraints}" f"  # {vulnerability.name} (ID: {vulnerability.identifier})"
 
 
-def get_args() -> Any:
+def get_args() -> ArgumentNamespace:
     """Parse arguments from the command line and return them."""
     parser = argparse.ArgumentParser(
         description=(
@@ -203,7 +204,18 @@ def get_args() -> Any:
             f" Supported keys: {Configuration.supported_keys()}"
         ),
     )
-    return parser.parse_args()
+    parser.add_argument(
+        "--severities",
+        type=str,
+        action="store",
+        nargs="+",
+        default=["critical"],
+        help=(
+            "Vulnerability severities include."
+            " Can also be given as 'severities' in config file."
+        ),
+    )
+    return parser.parse_args(namespace=ArgumentNamespace())
 
 
 def get_config(config_file: Optional[str]) -> Configuration:
@@ -243,7 +255,8 @@ def main() -> int:
                 "'output' is not a stream! This suggests a programming error"
             )
         config: Configuration = get_config(config_file=args.config)
-        config.ignore_ids.extend(args.ignore_ids)
+        config.ignore_ids.extend(sorted(args.ignore_ids))
+        config.severities.extend(sorted(args.severities))
 
         if args.dump_config:
             yaml.safe_dump(config.to_dict(), stream=sys.stdout)
@@ -251,7 +264,7 @@ def main() -> int:
 
         apis: List[
             SecurityVulnerabilityDatabaseAPI
-        ] = get_security_vulnerability_database_apis()
+        ] = get_security_vulnerability_database_apis(severities=args.severities)
 
         vulnerabilities: List[SecurityVulnerability] = fetch_vulnerabilities(apis)
         vulnerabilities = filter_vulnerabilities(config, vulnerabilities)
