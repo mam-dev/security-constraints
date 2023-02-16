@@ -9,7 +9,7 @@ if sys.version_info >= (3, 8):
 else:
     from importlib_metadata import version
 
-from typing import IO, List, Optional, Sequence
+from typing import IO, List, Optional, Sequence, Set
 
 import yaml
 
@@ -20,27 +20,28 @@ from security_constraints.common import (
     SecurityConstraintsError,
     SecurityVulnerability,
     SecurityVulnerabilityDatabaseAPI,
+    SeverityLevel,
 )
 from security_constraints.github_security_advisory import GithubSecurityAdvisoryAPI
 
 LOGGER = logging.getLogger(__name__)
 
 
-def get_security_vulnerability_database_apis(
-    severities: Optional[List[str]] = None,
-) -> List[SecurityVulnerabilityDatabaseAPI]:
+def get_security_vulnerability_database_apis() -> (
+    List[SecurityVulnerabilityDatabaseAPI]
+):
     """Return the APIs to use for fetching vulnerabilities."""
-    return [GithubSecurityAdvisoryAPI(severities=severities)]
+    return [GithubSecurityAdvisoryAPI()]
 
 
 def fetch_vulnerabilities(
-    apis: Sequence[SecurityVulnerabilityDatabaseAPI],
+    apis: Sequence[SecurityVulnerabilityDatabaseAPI], severities: Set[SeverityLevel]
 ) -> List[SecurityVulnerability]:
     """Use apis to fetch and return vulnerabilities."""
     vulnerabilities: List[SecurityVulnerability] = []
     for api in apis:
         LOGGER.debug("Fetching vulnerabilities from %s...", api.get_database_name())
-        vulnerabilities.extend(api.get_vulnerabilities())
+        vulnerabilities.extend(api.get_vulnerabilities(severities=severities))
     return vulnerabilities
 
 
@@ -205,14 +206,15 @@ def get_args() -> ArgumentNamespace:
         ),
     )
     parser.add_argument(
-        "--severities",
-        type=str,
+        "--min-severity",
+        type=SeverityLevel,
         action="store",
-        nargs="+",
-        default=["critical"],
+        default=SeverityLevel.CRITICAL,
         help=(
-            "Vulnerability severities include."
-            " Can also be given as 'severities' in config file."
+            "Lowest vulnerability severity to include."
+            " All vulnerabilities with this severity or higher will be considered."
+            f" Supported values: {SeverityLevel.supported_values()}"
+            " Can also be given as 'min_severity' in config file."
         ),
     )
     return parser.parse_args(namespace=ArgumentNamespace())
@@ -256,7 +258,7 @@ def main() -> int:
             )
         config: Configuration = get_config(config_file=args.config)
         config.ignore_ids.extend(sorted(args.ignore_ids))
-        config.severities.extend(sorted(args.severities))
+        config.min_severity = min(config.min_severity, args.min_severity)
 
         if args.dump_config:
             yaml.safe_dump(config.to_dict(), stream=sys.stdout)
@@ -264,9 +266,11 @@ def main() -> int:
 
         apis: List[
             SecurityVulnerabilityDatabaseAPI
-        ] = get_security_vulnerability_database_apis(severities=args.severities)
+        ] = get_security_vulnerability_database_apis()
 
-        vulnerabilities: List[SecurityVulnerability] = fetch_vulnerabilities(apis)
+        vulnerabilities: List[SecurityVulnerability] = fetch_vulnerabilities(
+            apis, severities=config.min_severity.get_higher_or_equal_severities()
+        )
         vulnerabilities = filter_vulnerabilities(config, vulnerabilities)
         vulnerabilities = sort_vulnerabilities(vulnerabilities)
 

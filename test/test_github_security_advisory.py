@@ -1,7 +1,8 @@
-from typing import Dict, List
+from typing import Dict, List, Set
 
 import pytest
 
+from security_constraints.common import SeverityLevel
 from security_constraints.github_security_advisory import (
     FailedPrerequisitesError,
     FetchVulnerabilitiesError,
@@ -27,7 +28,23 @@ def test_get_database_name(github_token) -> None:
     assert GithubSecurityAdvisoryAPI().get_database_name() == "Github Security Advisory"
 
 
-def test_get_vulnerabilities(github_token, requests_mock) -> None:
+@pytest.mark.parametrize(
+    "severities, expected_graphql_severities",
+    [
+        ({SeverityLevel.CRITICAL}, "[CRITICAL]"),
+        ({SeverityLevel.HIGH, SeverityLevel.CRITICAL}, "[CRITICAL,HIGH]"),
+        (
+            {SeverityLevel.MODERATE, SeverityLevel.HIGH, SeverityLevel.CRITICAL},
+            "[CRITICAL,HIGH,MODERATE]",
+        ),
+    ],
+)
+def test_get_vulnerabilities(
+    github_token,
+    requests_mock,
+    severities: Set[SeverityLevel],
+    expected_graphql_severities: str,
+) -> None:
     cursors = (
         "Y3Vyc29yOnYyOpK5MjAyMi0wMy0yM1QyMDo1NDoyNSswMTowMM0X4Q==",
         "Y3Vyc29yOnYyOpK5MjAyMC0wOS0yNVQxOTo0MjowMCswMjowMM0UeQ==",
@@ -92,10 +109,34 @@ def test_get_vulnerabilities(github_token, requests_mock) -> None:
     )
 
     api = GithubSecurityAdvisoryAPI()
-    vulnerabilities = api.get_vulnerabilities()
+    vulnerabilities = api.get_vulnerabilities(severities=severities)
 
     assert vulnerabilities == expected_vulnerabilities
     assert requests_mock.call_count == 3
+    assert [req.json()["query"] for req in requests_mock.request_history] == [
+        (
+            "{"
+            "securityVulnerabilities("
+            " first: 100"
+            " ecosystem:PIP"
+            f" severities:{expected_graphql_severities}"
+            f" {additional}"
+            ") {"
+            "    totalCount"
+            "    pageInfo { endCursor startCursor hasNextPage }"
+            "    nodes {"
+            "        advisory {"
+            "            ghsaId"
+            "            identifiers { value type }"
+            "        }"
+            "        vulnerableVersionRange"
+            "        package { name }"
+            "    }"
+            "}"
+            "}"
+        )
+        for additional in [""] + [f'after:"{cursor}"' for cursor in cursors[1:3]]
+    ]
 
 
 def test_get_vulnerabilities__http_error(github_token, requests_mock) -> None:
@@ -105,7 +146,7 @@ def test_get_vulnerabilities__http_error(github_token, requests_mock) -> None:
     )
     with pytest.raises(FetchVulnerabilitiesError):
         api = GithubSecurityAdvisoryAPI()
-        _ = api.get_vulnerabilities()
+        _ = api.get_vulnerabilities(severities={SeverityLevel.CRITICAL})
 
 
 def test_get_vulnerabilities__malformed_data(github_token, requests_mock) -> None:
@@ -117,7 +158,7 @@ def test_get_vulnerabilities__malformed_data(github_token, requests_mock) -> Non
 
     with pytest.raises(FetchVulnerabilitiesError):
         api = GithubSecurityAdvisoryAPI()
-        _ = api.get_vulnerabilities()
+        _ = api.get_vulnerabilities(severities={SeverityLevel.CRITICAL})
 
 
 def test_get_vulnerabilities__json_decode_error(github_token, requests_mock) -> None:
@@ -129,4 +170,4 @@ def test_get_vulnerabilities__json_decode_error(github_token, requests_mock) -> 
 
     with pytest.raises(FetchVulnerabilitiesError):
         api = GithubSecurityAdvisoryAPI()
-        _ = api.get_vulnerabilities()
+        _ = api.get_vulnerabilities(severities={SeverityLevel.CRITICAL})
