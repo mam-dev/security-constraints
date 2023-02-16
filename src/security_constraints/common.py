@@ -2,7 +2,74 @@
 import abc
 import argparse
 import dataclasses
-from typing import IO, Dict, List, Optional
+import enum
+from typing import IO, Any, Dict, List, Optional, Set
+
+
+class SeverityLevel(str, enum.Enum):
+    """The severity of a security vulnerability."""
+
+    CRITICAL = "CRITICAL"
+    HIGH = "HIGH"
+    MODERATE = "MODERATE"
+    LOW = "LOW"
+
+    @classmethod
+    def _missing_(cls, value: object) -> Optional["SeverityLevel"]:
+        # Makes instantiation case-insensitive
+        if isinstance(value, str):
+            for member in cls:
+                if member.value == value.upper():
+                    return member
+        return None
+
+    def get_higher_or_equal_severities(self) -> Set["SeverityLevel"]:
+        """Get a set containing this SeverityLevel and all higher ones."""
+        return {
+            SeverityLevel(value)
+            for value in type(self).__members__.values()
+            if self.severity_score <= SeverityLevel(value).severity_score
+        }
+
+    @classmethod
+    def supported_values(cls) -> List[str]:
+        """Return a list of the supported severity values."""
+        return list(str(v) for v in cls)
+
+    @property
+    def severity_score(self) -> int:
+        """Get a numerical value for the severity.
+
+        Higher value means more severe.
+
+        """
+        return {
+            self.LOW.value: 10,  # type: ignore[attr-defined]
+            self.MODERATE.value: 25,  # type: ignore[attr-defined]
+            self.HIGH.value: 50,  # type: ignore[attr-defined]
+            self.CRITICAL.value: 100,  # type: ignore[attr-defined]
+        }[self.value]
+
+    def _compare_as_int(self, method_name: str, other: Any) -> bool:
+        if not isinstance(other, type(self)):
+            raise TypeError(f"Cannot compare {type(self)} and {type(other)}")
+        comparison_method = getattr(self.severity_score, method_name)
+        return comparison_method(other.severity_score)  # type: ignore[no-any-return]
+
+    def __gt__(self, other) -> bool:
+        return self._compare_as_int("__gt__", other)
+
+    def __lt__(self, other) -> bool:
+        return self._compare_as_int("__lt__", other)
+
+    def __ge__(self, other) -> bool:
+        return self._compare_as_int("__ge__", other)
+
+    def __le__(self, other) -> bool:
+        return self._compare_as_int("__le__", other)
+
+    def __str__(self) -> str:
+        return self.value
 
 
 class ArgumentNamespace(argparse.Namespace):
@@ -14,7 +81,7 @@ class ArgumentNamespace(argparse.Namespace):
     output: Optional[IO]
     ignore_ids: List[str]
     config: Optional[str]
-    severities: List[str]
+    min_severity: SeverityLevel
 
 
 class SecurityConstraintsError(Exception):
@@ -38,10 +105,23 @@ class Configuration:
     """
 
     ignore_ids: List[str] = dataclasses.field(default_factory=list)
-    severities: List[str] = dataclasses.field(default_factory=list)
+    min_severity: SeverityLevel = dataclasses.field(default=SeverityLevel.CRITICAL)
+
+    def __post_init__(self) -> None:
+        # Type coerce the severity
+        self.min_severity = SeverityLevel(self.min_severity)
 
     def to_dict(self) -> Dict:
-        return dataclasses.asdict(self)
+        def _dict_factory(data):
+            def convert(obj):
+                if isinstance(obj, enum.Enum):
+                    # Use values for Enums
+                    return obj.value
+                return obj
+
+            return dict((key, convert(value)) for key, value in data)
+
+        return dataclasses.asdict(self, dict_factory=_dict_factory)
 
     @classmethod
     def from_dict(cls, json: Dict) -> "Configuration":
@@ -106,5 +186,7 @@ class SecurityVulnerabilityDatabaseAPI(abc.ABC):
         """Return the name of the vulnerability database in human-readable text."""
 
     @abc.abstractmethod
-    def get_vulnerabilities(self) -> List[SecurityVulnerability]:
+    def get_vulnerabilities(
+        self, severities: Set[SeverityLevel]
+    ) -> List[SecurityVulnerability]:
         """Fetch and return all relevant security vulnerabilities from the database."""

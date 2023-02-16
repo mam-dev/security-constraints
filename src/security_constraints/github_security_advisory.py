@@ -2,7 +2,7 @@
 import logging
 import os
 import string
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Set
 
 import requests
 
@@ -11,6 +11,7 @@ from security_constraints.common import (
     FetchVulnerabilitiesError,
     SecurityVulnerability,
     SecurityVulnerabilityDatabaseAPI,
+    SeverityLevel,
 )
 
 LOGGER = logging.getLogger(__name__)
@@ -49,11 +50,7 @@ class GithubSecurityAdvisoryAPI(SecurityVulnerabilityDatabaseAPI):
 
     URL = "https://api.github.com/graphql"
 
-    def __init__(self, severities: Optional[List[str]] = None) -> None:
-        if severities is None:
-            self.severities = ["CRITICAL"]
-        else:
-            self.severities = severities
+    def __init__(self) -> None:
         self._session = requests.Session()
         self._current_cursor: Optional[str] = None
         try:
@@ -64,14 +61,20 @@ class GithubSecurityAdvisoryAPI(SecurityVulnerabilityDatabaseAPI):
     def get_database_name(self) -> str:
         return "Github Security Advisory"
 
-    def get_vulnerabilities(self) -> List[SecurityVulnerability]:
-        """Fetch all CRITICAL vulnerabilities from GitHub Security Advisory."""
+    def get_vulnerabilities(
+        self, severities: Set[SeverityLevel]
+    ) -> List[SecurityVulnerability]:
+        """Fetch all CRITICAL vulnerabilities from GitHub Security Advisory.
+
+        The SeverityLevels map trivially to GitHub's SecurityAdvisorySeverity.
+
+        """
         after: Optional[str] = None
         vulnerabilities: List[SecurityVulnerability] = []
         more_data_exists = True
         while more_data_exists:
             json_response: Dict = self._do_graphql_request(
-                severities=self.severities, after=after
+                severities=severities, after=after
             )
             try:
                 json_data: Dict = json_response["data"]
@@ -103,11 +106,11 @@ class GithubSecurityAdvisoryAPI(SecurityVulnerabilityDatabaseAPI):
         return vulnerabilities
 
     def _do_graphql_request(
-        self, severities: List[str], after: Optional[str] = None
+        self, severities: Set[SeverityLevel], after: Optional[str] = None
     ) -> Any:
         query = QUERY_TEMPLATE.substitute(
             first=100,
-            severities=",".join(severities),
+            severities=",".join(sorted([str(severity) for severity in severities])),
             additional=f'after:"{after}"' if after is not None else "",
         )
         response: requests.Response = self._session.post(

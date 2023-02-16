@@ -89,6 +89,16 @@ waitress!=1.4.2  # CVE-2020-5236 (ID: GHSA-73m2-3pwg-5fgc)
 >
 ```
 
+By default, security-constraints fetches all security vulnerabilities with
+severity "CRITICAL" or higher (as understood by Github Security Advisory).
+The minimum severity can be configured using the option `--min-severity` or
+by setting `min_severity` in the config file (if both are set, their common
+minimum will be used).
+
+```bash
+>security-constraints --min-severity high
+```
+
 ## Contributing
 Pull requests as well as new issues are welcome.
 
