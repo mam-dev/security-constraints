@@ -3,11 +3,12 @@ import abc
 import argparse
 import dataclasses
 import enum
+import sys
 from typing import IO, Any, Dict, List, Optional, Set, get_type_hints
 
-try:
+if sys.version_info >= (3, 8):
     from typing import TypedDict
-except ImportError:
+else:
     from typing_extensions import TypedDict
 
 
