@@ -220,17 +220,16 @@ def get_args() -> ArgumentNamespace:
     return parser.parse_args(namespace=ArgumentNamespace())
 
 
-def get_config(config_file: Optional[str]) -> Configuration:
-    """Return configuration read from config_file.
+def get_config(args: ArgumentNamespace) -> Configuration:
+    """Return configuration read from args, including provided config file."""
+    config_from_args = Configuration.from_args(args)
 
-    Default config will be returned if config_file is None.
+    if args.config is None:
+        return config_from_args
 
-    """
-    if config_file is None:
-        return Configuration()
-
-    with open(config_file, mode="r") as fh:
-        return Configuration.from_dict(yaml.safe_load(fh))
+    with open(args.config, mode="r") as fh:
+        config_from_file = Configuration.from_dict(yaml.safe_load(fh))
+    return Configuration.merge(config_from_file, config_from_args)
 
 
 def setup_logging(debug: bool = False) -> None:
@@ -256,9 +255,7 @@ def main() -> int:
             raise AssertionError(
                 "'output' is not a stream! This suggests a programming error"
             )
-        config: Configuration = get_config(config_file=args.config)
-        config.ignore_ids.extend(sorted(args.ignore_ids))
-        config.min_severity = min(config.min_severity, args.min_severity)
+        config: Configuration = get_config(args=args)
 
         if args.dump_config:
             yaml.safe_dump(config.to_dict(), stream=sys.stdout)
