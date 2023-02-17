@@ -3,7 +3,12 @@ import abc
 import argparse
 import dataclasses
 import enum
-from typing import IO, Any, Dict, List, Optional, Set
+from typing import IO, Any, Dict, List, Optional, Set, get_type_hints
+
+try:
+    from typing import TypedDict
+except ImportError:
+    from typing_extensions import TypedDict
 
 
 class SeverityLevel(str, enum.Enum):
@@ -83,6 +88,13 @@ class ArgumentNamespace(argparse.Namespace):
     config: Optional[str]
     min_severity: SeverityLevel
 
+    def __setattr__(self, key, value):
+        # Makes it so that no new attributes can be dynamically created:
+        # (Using "slots" did not work.)
+        if key not in get_type_hints(self):
+            raise AttributeError(f"No attribute named '{key}'")
+        super().__setattr__(key, value)
+
 
 class SecurityConstraintsError(Exception):
     """Base class for all exceptions in this application."""
@@ -96,20 +108,17 @@ class FetchVulnerabilitiesError(SecurityConstraintsError):
     """Error which occurred when fetching vulnerabilities."""
 
 
-@dataclasses.dataclass
+@dataclasses.dataclass(frozen=True)
 class Configuration:
     """The application configuration.
 
-    Corresponds to the contents of a configuration file.
+    Corresponds to the contents of a configuration file,
+    or to (some of) the arguments given in a CLI execution.
 
     """
 
-    ignore_ids: List[str] = dataclasses.field(default_factory=list)
+    ignore_ids: Set[str] = dataclasses.field(default_factory=set)
     min_severity: SeverityLevel = dataclasses.field(default=SeverityLevel.CRITICAL)
-
-    def __post_init__(self) -> None:
-        # Type coerce the severity
-        self.min_severity = SeverityLevel(self.min_severity)
 
     def to_dict(self) -> Dict:
         def _dict_factory(data):
@@ -117,6 +126,9 @@ class Configuration:
                 if isinstance(obj, enum.Enum):
                     # Use values for Enums
                     return obj.value
+                if isinstance(obj, set):
+                    # Use ordered list for sets
+                    return sorted(obj)
                 return obj
 
             return dict((key, convert(value)) for key, value in data)
@@ -124,8 +136,34 @@ class Configuration:
         return dataclasses.asdict(self, dict_factory=_dict_factory)
 
     @classmethod
-    def from_dict(cls, json: Dict) -> "Configuration":
-        return cls(**json)
+    def from_dict(cls, in_dict: Dict) -> "Configuration":
+        class Kwargs(TypedDict, total=False):
+            ignore_ids: Set[str]
+            min_severity: SeverityLevel
+
+        kwargs: Kwargs = {}
+        if "ignore_ids" in in_dict:
+            kwargs["ignore_ids"] = set(in_dict["ignore_ids"])
+        if "min_severity" in in_dict:
+            kwargs["min_severity"] = SeverityLevel(in_dict["min_severity"])
+        return cls(**kwargs)
+
+    @classmethod
+    def from_args(cls, args: ArgumentNamespace) -> "Configuration":
+        return cls(
+            ignore_ids=set(args.ignore_ids),
+            min_severity=args.min_severity,
+        )
+
+    @classmethod
+    def merge(cls, *config: "Configuration") -> "Configuration":
+        """Merge multiple Configurations into a new one."""
+        all_ignore_ids_entries = (c.ignore_ids for c in config)
+        all_min_severity_entries = (c.min_severity for c in config)
+        return cls(
+            ignore_ids=set.union(*all_ignore_ids_entries),
+            min_severity=min(all_min_severity_entries),
+        )
 
     @classmethod
     def supported_keys(cls) -> List[str]:

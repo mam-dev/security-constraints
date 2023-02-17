@@ -11,14 +11,6 @@ from security_constraints.github_security_advisory import (
 )
 
 
-@pytest.fixture(name="github_token")
-def fixture_token_in_env(monkeypatch) -> str:
-    """Set SC_GITHUB_TOKEN environment variable and return it."""
-    token = "3e00409b-f017-4ecc-b7bf-f11f6e2a5693"
-    monkeypatch.setenv("SC_GITHUB_TOKEN", token)
-    return token
-
-
 def test_instantiate_without_token_in_env() -> None:
     with pytest.raises(FailedPrerequisitesError):
         _ = GithubSecurityAdvisoryAPI()
