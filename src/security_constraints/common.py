@@ -7,9 +7,9 @@ import sys
 from typing import IO, Any, Dict, List, Optional, Set, get_type_hints
 
 if sys.version_info >= (3, 8):
-    from typing import TypedDict
+    from typing import TypedDict  # pragma: no cover
 else:
-    from typing_extensions import TypedDict
+    from typing_extensions import TypedDict  # pragma: no cover
 
 
 class SeverityLevel(str, enum.Enum):
@@ -129,7 +129,7 @@ class Configuration:
                 if isinstance(obj, set):
                     # Use ordered list for sets
                     return sorted(obj)
-                return obj
+                return obj  # pragma: no cover
 
             return {key: convert(value) for key, value in data}
 

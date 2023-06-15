@@ -89,6 +89,15 @@ def test_get_security_vulnerability_database_apis(monkeypatch) -> None:
             ),
             PackageConstraints(package="pystuff", specifiers=["<0.0.1"]),
         ),
+        (
+            SecurityVulnerability(
+                name="CVE-2020-123",
+                identifier="GHSA-1-2-3",
+                package="pystuff",
+                vulnerable_range="",  # strange, but function should handle it
+            ),
+            PackageConstraints(package="pystuff", specifiers=[]),
+        ),
     ],
 )
 def test_get_safe_version_constraints(

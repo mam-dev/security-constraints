@@ -25,7 +25,20 @@ build-backend = "setuptools.build_meta"
 where = ["src"]
 namespaces = false
 
+[tool.coverage.run]
+branch = true
+omit = [
+  "*/.venv/*",
+  "*/venv/*",
+  "test/*",
+]
+
+[tool.coverage.report]
+show_missing = true
+fail_under = 100
+
 [tool.pytest.ini_options]
+addopts = "--cov --cov-report term --random-order"
 minversion = "6.0"
 usefixtures = ["requests_mock"]
 testpaths = ["test"]

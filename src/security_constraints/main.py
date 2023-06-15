@@ -5,9 +5,9 @@ import sys
 from datetime import datetime, timezone
 
 if sys.version_info >= (3, 8):
-    from importlib.metadata import version
+    from importlib.metadata import version  # pragma: no cover
 else:
-    from importlib_metadata import version
+    from importlib_metadata import version  # pragma: no cover
 
 from typing import IO, List, Optional, Sequence, Set
 

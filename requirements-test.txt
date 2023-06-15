@@ -1,3 +1,6 @@
 pytest
+pytest-cov
+pytest-random-order
+pytest-integration
 requests-mock
 freezegun
