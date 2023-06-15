@@ -1,11 +1,9 @@
 import argparse
-import datetime
 import logging
 import sys
 from typing import TYPE_CHECKING, List, Set, Type
 from unittest.mock import Mock, call, create_autospec
 
-import freezegun
 import pytest
 import yaml
 
@@ -323,11 +321,6 @@ def test_sort_vulnerabilities(
     assert sort_vulnerabilities(vulnerabilities=vulnerabilities) == expected
 
 
-@freezegun.freeze_time(
-    time_to_freeze=datetime.datetime(
-        1986, 4, 9, 12, 11, 10, 9, tzinfo=datetime.timezone.utc
-    )
-)
 @pytest.mark.parametrize(
     "db_names, config, expected",
     [
@@ -365,7 +358,7 @@ def test_sort_vulnerabilities(
     ],
 )
 def test_create_header(
-    monkeypatch, db_names: List[str], config: Configuration, expected: str
+    monkeypatch, frozen_time, db_names: List[str], config: Configuration, expected: str
 ):
     mock_version = Mock(return_value="x.y.z")
     monkeypatch.setattr("security_constraints.main.version", mock_version)
@@ -536,16 +529,6 @@ def fixture_mock_get_safe_constraints(monkeypatch) -> Mock:
     return mock_get_safe_constraints
 
 
-FAKE_VERSION = "x.y.z"
-
-
-@pytest.fixture(name="mock_version")
-def fixture_mock_version(monkeypatch) -> Mock:
-    mock_version: Mock = Mock(return_value=FAKE_VERSION)
-    monkeypatch.setattr("security_constraints.main.version", mock_version)
-    return mock_version
-
-
 @pytest.mark.parametrize("to_stdout", [True, False])
 def test_main(
     mock_are_constraints_pip_friendly: Mock,
@@ -696,7 +679,7 @@ def test_main__version(
     assert exit_code == 0
     out, err = capsys.readouterr()
     mock_version.assert_called_once_with("security-constraints")
-    assert FAKE_VERSION in out
+    assert "x.y.z" in out
     assert not err
     mock_yaml_dump.assert_not_called()
     mock_get_args.assert_called_once_with()
