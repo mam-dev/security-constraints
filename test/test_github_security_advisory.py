@@ -136,8 +136,8 @@ def test_get_vulnerabilities__http_error(github_token, requests_mock) -> None:
         "https://api.github.com/graphql",
         status_code=500,
     )
+    api = GithubSecurityAdvisoryAPI()
     with pytest.raises(FetchVulnerabilitiesError):
-        api = GithubSecurityAdvisoryAPI()
         _ = api.get_vulnerabilities(severities={SeverityLevel.CRITICAL})
 
 
@@ -148,8 +148,8 @@ def test_get_vulnerabilities__malformed_data(github_token, requests_mock) -> Non
         request_headers={"Authorization": f"bearer {github_token}"},
     )
 
+    api = GithubSecurityAdvisoryAPI()
     with pytest.raises(FetchVulnerabilitiesError):
-        api = GithubSecurityAdvisoryAPI()
         _ = api.get_vulnerabilities(severities={SeverityLevel.CRITICAL})
 
 
@@ -160,6 +160,6 @@ def test_get_vulnerabilities__json_decode_error(github_token, requests_mock) -> 
         request_headers={"Authorization": f"bearer {github_token}"},
     )
 
+    api = GithubSecurityAdvisoryAPI()
     with pytest.raises(FetchVulnerabilitiesError):
-        api = GithubSecurityAdvisoryAPI()
         _ = api.get_vulnerabilities(severities={SeverityLevel.CRITICAL})

@@ -25,10 +25,6 @@ build-backend = "setuptools.build_meta"
 where = ["src"]
 namespaces = false
 
-[tool.isort]
-profile = "black"
-src_paths = ["src", "test"]
-
 [tool.pytest.ini_options]
 minversion = "6.0"
 usefixtures = ["requests_mock"]
@@ -45,3 +41,66 @@ files = ["src", "test"]
 [[tool.mypy.overrides]]
 module = 'py'
 ignore_missing_imports = true
+
+[tool.ruff]
+src = ["src", "test"]
+select = [
+  "E",   # pycodestyle
+  "F",   # pyflakes
+  "UP",  # pyupgrade
+  "S",   # flake8-bandit
+  "D",   # pydocstyle
+  "PT",  # flake8-pytest-style
+  "I",   # isort
+  "RUF", # Ruff-specific rules
+  "PTH", # flake8-use-pathlib
+  "ERA", # eradicate
+  "PL",  # pylint
+  "FBT", # flake8-boolean-trap
+  "B",   # flake8-bugbear
+  "A",   # flake8-builtins
+  "ISC", # flake8-implicit-str-concat
+  "INP", # flake8-no-pep420
+  "SLF", # flake8-self
+  "SIM", # flake8-simplify
+  "TID", # flake8-tidy-imports
+  "ARG", # flake8-unused-arguments
+  "TRY", # tryceratops
+  "FLY",  # flynt
+  "RSE",  # flake8-raise
+  "RET",  # flake8-return
+  "FIX",  # flake8-fixme
+  "Q",    # flake8-quotes
+  "C4",   # flake8-comprehensions
+  "DTZ",  # flake8-datetimez
+  "T10",  # flake8-debugger
+  "T20",  # flake8-print
+  "TCH",  # flake8-type-checking
+]
+ignore = [
+  "D100", "D102", "D103", "D104", "D105", "D107",
+  "PTH123",
+  "TRY003", "TRY301",
+]
+
+[tool.ruff.per-file-ignores]
+"test/**/*.py" = [
+  "S101", "S105",
+  "D103",
+  "FBT001",
+  "SLF001",
+  "PLR2004", "PLR0913",
+  "ARG001",
+]
+
+[tool.ruff.pydocstyle]
+convention = "google"
+
+[tool.ruff.flake8-pytest-style]
+fixture-parentheses = false
+mark-parentheses = false
+parametrize-names-type = "csv"
+parametrize-values-type = "list"
+
+[tool.ruff.flake8-tidy-imports]
+ban-relative-imports = "parents"

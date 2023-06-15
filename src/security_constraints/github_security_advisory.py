@@ -56,7 +56,9 @@ class GithubSecurityAdvisoryAPI(SecurityVulnerabilityDatabaseAPI):
         try:
             self._token: str = os.environ["SC_GITHUB_TOKEN"]
         except KeyError as missing_key:
-            raise FailedPrerequisitesError(f"Missing from environment: {missing_key}")
+            raise FailedPrerequisitesError(
+                f"Missing from environment: {missing_key}"
+            ) from None
 
     def get_database_name(self) -> str:
         return "Github Security Advisory"
@@ -101,7 +103,7 @@ class GithubSecurityAdvisoryAPI(SecurityVulnerabilityDatabaseAPI):
             except KeyError as missing_key:
                 error_msg = f"Key {missing_key} not found in: {json_response}"
                 LOGGER.error(error_msg)
-                raise FetchVulnerabilitiesError(error_msg)
+                raise FetchVulnerabilitiesError(error_msg) from None
 
         return vulnerabilities
 

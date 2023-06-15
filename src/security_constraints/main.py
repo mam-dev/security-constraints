@@ -2,7 +2,7 @@
 import argparse
 import logging
 import sys
-from datetime import datetime
+from datetime import datetime, timezone
 
 if sys.version_info >= (3, 8):
     from importlib.metadata import version
@@ -125,7 +125,8 @@ def create_header(
     apis: Sequence[SecurityVulnerabilityDatabaseAPI], config: Configuration
 ) -> str:
     """Create the comment header which goes at the top of the output."""
-    timestamp: str = f"{datetime.utcnow().isoformat()}Z"
+    time_format: str = "%Y-%m-%dT%H:%M:%S.%fZ"  # ISO with Z for UTC
+    timestamp: str = datetime.now(tz=timezone.utc).strftime(time_format)
     sources: List[str] = [api.get_database_name() for api in apis]
     app_name: str = "security-constraints"
     lines: List[str] = [
@@ -151,7 +152,7 @@ def format_constraints_file_line(
             "Constraints and vulnerability are for different packages!"
             " This suggests a programming error!"
         )
-    return f"{constraints}" f"  # {vulnerability.name} (ID: {vulnerability.identifier})"
+    return f"{constraints}  # {vulnerability.name} (ID: {vulnerability.identifier})"
 
 
 def get_args() -> ArgumentNamespace:
@@ -227,12 +228,12 @@ def get_config(args: ArgumentNamespace) -> Configuration:
     if args.config is None:
         return config_from_args
 
-    with open(args.config, mode="r") as fh:
+    with open(args.config) as fh:
         config_from_file = Configuration.from_dict(yaml.safe_load(fh))
     return Configuration.merge(config_from_file, config_from_args)
 
 
-def setup_logging(debug: bool = False) -> None:
+def setup_logging(*, debug: bool = False) -> None:
     logging.getLogger().setLevel(logging.DEBUG if debug else logging.INFO)
 
 
@@ -247,7 +248,7 @@ def main() -> int:
     try:
         args = get_args()
         if args.version:
-            print(version("security-constraints"))
+            print(version("security-constraints"))  # noqa: T201
             return 0
         setup_logging(debug=args.debug)
         output = args.output

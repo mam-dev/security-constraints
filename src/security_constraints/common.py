@@ -40,7 +40,7 @@ class SeverityLevel(str, enum.Enum):
     @classmethod
     def supported_values(cls) -> List[str]:
         """Return a list of the supported severity values."""
-        return list(str(v) for v in cls)
+        return [str(v) for v in cls]
 
     @property
     def severity_score(self) -> int:
@@ -131,7 +131,7 @@ class Configuration:
                     return sorted(obj)
                 return obj
 
-            return dict((key, convert(value)) for key, value in data)
+            return {key: convert(value) for key, value in data}
 
         return dataclasses.asdict(self, dict_factory=_dict_factory)
 

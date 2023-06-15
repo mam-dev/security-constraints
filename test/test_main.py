@@ -2,8 +2,7 @@ import argparse
 import datetime
 import logging
 import sys
-from pathlib import Path
-from typing import List, Set, Type
+from typing import TYPE_CHECKING, List, Set, Type
 from unittest.mock import Mock, call, create_autospec
 
 import freezegun
@@ -11,6 +10,7 @@ import pytest
 import yaml
 
 from security_constraints.common import (
+    ArgumentNamespace,
     Configuration,
     PackageConstraints,
     SecurityConstraintsError,
@@ -32,6 +32,9 @@ from security_constraints.main import (
     setup_logging,
     sort_vulnerabilities,
 )
+
+if TYPE_CHECKING:
+    from pathlib import Path
 
 
 def test_get_security_vulnerability_database_apis(monkeypatch) -> None:
@@ -320,7 +323,11 @@ def test_sort_vulnerabilities(
     assert sort_vulnerabilities(vulnerabilities=vulnerabilities) == expected
 
 
-@freezegun.freeze_time(time_to_freeze=datetime.datetime(1986, 4, 9, 12, 11, 10, 9))
+@freezegun.freeze_time(
+    time_to_freeze=datetime.datetime(
+        1986, 4, 9, 12, 11, 10, 9, tzinfo=datetime.timezone.utc
+    )
+)
 @pytest.mark.parametrize(
     "db_names, config, expected",
     [
@@ -422,8 +429,140 @@ def test_format_constraints_file_line__package_mismatch() -> None:
         )
 
 
+@pytest.fixture(name="mock_are_constraints_pip_friendly")
+def fixture_mock_are_constraints_pip_friendly(monkeypatch) -> Mock:
+    mock_are_constraints_pip_friendly: Mock = create_autospec(
+        are_constraints_pip_friendly
+    )
+    monkeypatch.setattr(
+        "security_constraints.main.are_constraints_pip_friendly",
+        mock_are_constraints_pip_friendly,
+    )
+    return mock_are_constraints_pip_friendly
+
+
+@pytest.fixture(name="mock_yaml_dump")
+def fixture_mock_yaml_dump(monkeypatch) -> Mock:
+    mock_yaml_dump: Mock = create_autospec(yaml.safe_dump)
+    monkeypatch.setattr("security_constraints.main.yaml.safe_dump", mock_yaml_dump)
+    return mock_yaml_dump
+
+
+@pytest.fixture(name="mock_fetch_vulnerabilities")
+def fixture_mock_fetch_vulnerabilities(monkeypatch) -> Mock:
+    mock_fetch_vulnerabilities: Mock = create_autospec(fetch_vulnerabilities)
+    monkeypatch.setattr(
+        "security_constraints.main.fetch_vulnerabilities", mock_fetch_vulnerabilities
+    )
+    return mock_fetch_vulnerabilities
+
+
+@pytest.fixture(name="mock_get_args")
+def fixture_mock_get_args(monkeypatch) -> Mock:
+    mock_get_args: Mock = create_autospec(get_args)
+    monkeypatch.setattr("security_constraints.main.get_args", mock_get_args)
+    return mock_get_args
+
+
+@pytest.fixture(name="mock_setup_logging")
+def fixture_mock_setup_logging(monkeypatch) -> Mock:
+    mock_setup_logging: Mock = create_autospec(setup_logging)
+    monkeypatch.setattr("security_constraints.main.setup_logging", mock_setup_logging)
+    return mock_setup_logging
+
+
+@pytest.fixture(name="mock_get_config")
+def fixture_mock_get_config(monkeypatch) -> Mock:
+    mock_get_config: Mock = create_autospec(get_config)
+    monkeypatch.setattr("security_constraints.main.get_config", mock_get_config)
+    return mock_get_config
+
+
+@pytest.fixture(name="mock_filter_vulnerabilities")
+def fixture_mock_filter_vulnerabilities(monkeypatch) -> Mock:
+    mock_filter_vulnerabilities: Mock = create_autospec(filter_vulnerabilities)
+    monkeypatch.setattr(
+        "security_constraints.main.filter_vulnerabilities", mock_filter_vulnerabilities
+    )
+    return mock_filter_vulnerabilities
+
+
+@pytest.fixture(name="mock_create_header")
+def fixture_mock_create_header(monkeypatch) -> Mock:
+    mock_create_header: Mock = create_autospec(create_header)
+    mock_create_header.return_value = "# Fake header"
+    monkeypatch.setattr("security_constraints.main.create_header", mock_create_header)
+    return mock_create_header
+
+
+@pytest.fixture(name="mock_get_apis")
+def fixture_mock_get_apis(monkeypatch) -> Mock:
+    mock_get_apis: Mock = create_autospec(get_security_vulnerability_database_apis)
+    monkeypatch.setattr(
+        "security_constraints.main.get_security_vulnerability_database_apis",
+        mock_get_apis,
+    )
+    return mock_get_apis
+
+
+@pytest.fixture(name="mock_sort_vulnerabilities")
+def fixture_mock_sort_vulnerabilities(monkeypatch) -> Mock:
+    mock_sort_vulnerabilities: Mock = create_autospec(sort_vulnerabilities)
+    monkeypatch.setattr(
+        "security_constraints.main.sort_vulnerabilities", mock_sort_vulnerabilities
+    )
+    return mock_sort_vulnerabilities
+
+
+@pytest.fixture(name="mock_format_constraints_file_line")
+def fixture_mock_format_constraints_file_line(monkeypatch) -> Mock:
+    mock_format_constraints_file_line: Mock = create_autospec(
+        format_constraints_file_line
+    )
+    monkeypatch.setattr(
+        "security_constraints.main.format_constraints_file_line",
+        mock_format_constraints_file_line,
+    )
+    return mock_format_constraints_file_line
+
+
+@pytest.fixture(name="mock_get_safe_constraints")
+def fixture_mock_get_safe_constraints(monkeypatch) -> Mock:
+    mock_get_safe_constraints: Mock = create_autospec(get_safe_version_constraints)
+    monkeypatch.setattr(
+        "security_constraints.main.get_safe_version_constraints",
+        mock_get_safe_constraints,
+    )
+    return mock_get_safe_constraints
+
+
+FAKE_VERSION = "x.y.z"
+
+
+@pytest.fixture(name="mock_version")
+def fixture_mock_version(monkeypatch) -> Mock:
+    mock_version: Mock = Mock(return_value=FAKE_VERSION)
+    monkeypatch.setattr("security_constraints.main.version", mock_version)
+    return mock_version
+
+
 @pytest.mark.parametrize("to_stdout", [True, False])
-def test_main(monkeypatch, arg_namespace, to_stdout: bool) -> None:
+def test_main(
+    mock_are_constraints_pip_friendly: Mock,
+    mock_yaml_dump: Mock,
+    mock_fetch_vulnerabilities: Mock,
+    mock_get_args: Mock,
+    mock_setup_logging: Mock,
+    mock_get_config: Mock,
+    mock_filter_vulnerabilities: Mock,
+    mock_create_header: Mock,
+    mock_get_apis: Mock,
+    mock_sort_vulnerabilities: Mock,
+    mock_format_constraints_file_line: Mock,
+    mock_get_safe_constraints: Mock,
+    arg_namespace: ArgumentNamespace,
+    to_stdout: bool,
+) -> None:
     mock_stream = Mock(isatty=Mock(return_value=to_stdout))
     mock_vulnerabilities = [create_autospec(SecurityVulnerability) for _ in range(3)]
     mock_sorted_vulnerabilities = [
@@ -432,51 +571,7 @@ def test_main(monkeypatch, arg_namespace, to_stdout: bool) -> None:
         mock_vulnerabilities[1],
     ]
     mock_constraints = [create_autospec(PackageConstraints) for _ in range(3)]
-    mock_fetch_vulnerabilities = create_autospec(fetch_vulnerabilities)
     mock_api = Mock(get_database_name=Mock(return_value="fake database"))
-    mock_get_args = create_autospec(get_args)
-    mock_setup_logging = create_autospec(setup_logging)
-    mock_get_config = create_autospec(get_config)
-    mock_yaml_dump = create_autospec(yaml.safe_dump)
-    mock_get_apis = create_autospec(get_security_vulnerability_database_apis)
-    mock_filter_vulnerabilities = create_autospec(filter_vulnerabilities)
-    mock_sort_vulnerabilities = create_autospec(sort_vulnerabilities)
-    mock_create_header = create_autospec(create_header)
-    mock_create_header.return_value = "# Fake header"
-    mock_format_constraints_file_line = create_autospec(format_constraints_file_line)
-    mock_get_safe_constraints = create_autospec(get_safe_version_constraints)
-    mock_are_constraints_pip_friendly = create_autospec(are_constraints_pip_friendly)
-    monkeypatch.setattr("security_constraints.main.get_args", mock_get_args)
-    monkeypatch.setattr("security_constraints.main.setup_logging", mock_setup_logging)
-    monkeypatch.setattr("security_constraints.main.get_config", mock_get_config)
-    monkeypatch.setattr("security_constraints.main.yaml.safe_dump", mock_yaml_dump)
-    monkeypatch.setattr(
-        "security_constraints.main.get_security_vulnerability_database_apis",
-        mock_get_apis,
-    )
-    monkeypatch.setattr(
-        "security_constraints.main.fetch_vulnerabilities", mock_fetch_vulnerabilities
-    )
-    monkeypatch.setattr(
-        "security_constraints.main.filter_vulnerabilities", mock_filter_vulnerabilities
-    )
-    monkeypatch.setattr(
-        "security_constraints.main.sort_vulnerabilities", mock_sort_vulnerabilities
-    )
-    monkeypatch.setattr("security_constraints.main.create_header", mock_create_header)
-    monkeypatch.setattr(
-        "security_constraints.main.format_constraints_file_line",
-        mock_format_constraints_file_line,
-    )
-    monkeypatch.setattr(
-        "security_constraints.main.get_safe_version_constraints",
-        mock_get_safe_constraints,
-    )
-    monkeypatch.setattr(
-        "security_constraints.main.are_constraints_pip_friendly",
-        mock_are_constraints_pip_friendly,
-    )
-
     mock_get_args.return_value = arg_namespace
     arg_namespace.output = mock_stream
     arg_namespace.ignore_ids = ["GHSA-X1"]
@@ -540,22 +635,17 @@ def test_main(monkeypatch, arg_namespace, to_stdout: bool) -> None:
 
 
 @pytest.mark.parametrize("to_stdout", [True, False])
-def test_main__dump_config(arg_namespace, monkeypatch, to_stdout: bool) -> None:
+def test_main__dump_config(
+    mock_get_args: Mock,
+    mock_setup_logging: Mock,
+    mock_get_config: Mock,
+    mock_yaml_dump: Mock,
+    mock_get_apis: Mock,
+    arg_namespace: ArgumentNamespace,
+    monkeypatch,
+    to_stdout: bool,
+) -> None:
     mock_stream = Mock(isatty=Mock(return_value=to_stdout))
-    mock_get_args = create_autospec(get_args)
-    mock_setup_logging = create_autospec(setup_logging)
-    mock_get_config = create_autospec(get_config)
-    mock_yaml_dump = create_autospec(yaml.safe_dump)
-    mock_get_apis = create_autospec(get_security_vulnerability_database_apis)
-    monkeypatch.setattr("security_constraints.main.get_args", mock_get_args)
-    monkeypatch.setattr("security_constraints.main.setup_logging", mock_setup_logging)
-    monkeypatch.setattr("security_constraints.main.get_config", mock_get_config)
-    monkeypatch.setattr("security_constraints.main.yaml.safe_dump", mock_yaml_dump)
-    monkeypatch.setattr(
-        "security_constraints.main.get_security_vulnerability_database_apis",
-        mock_get_apis,
-    )
-
     mock_get_args.return_value = arg_namespace
     arg_namespace.output = mock_stream
     arg_namespace.dump_config = True
@@ -584,24 +674,17 @@ def test_main__dump_config(arg_namespace, monkeypatch, to_stdout: bool) -> None:
         mock_stream.close.assert_called_once_with()
 
 
-def test_main__version(monkeypatch, capsys, arg_namespace) -> None:
-    mock_version = Mock(return_value="x.y.z")
-    monkeypatch.setattr("security_constraints.main.version", mock_version)
+def test_main__version(
+    mock_version: Mock,
+    mock_get_args: Mock,
+    mock_setup_logging: Mock,
+    mock_get_config: Mock,
+    mock_yaml_dump: Mock,
+    mock_get_apis: Mock,
+    arg_namespace: ArgumentNamespace,
+    capsys,
+) -> None:
     mock_stream = Mock()
-    mock_get_args = create_autospec(get_args)
-    mock_setup_logging = create_autospec(setup_logging)
-    mock_get_config = create_autospec(get_config)
-    mock_yaml_dump = create_autospec(yaml.safe_dump)
-    mock_get_apis = create_autospec(get_security_vulnerability_database_apis)
-    monkeypatch.setattr("security_constraints.main.get_args", mock_get_args)
-    monkeypatch.setattr("security_constraints.main.setup_logging", mock_setup_logging)
-    monkeypatch.setattr("security_constraints.main.get_config", mock_get_config)
-    monkeypatch.setattr("security_constraints.main.yaml.safe_dump", mock_yaml_dump)
-    monkeypatch.setattr(
-        "security_constraints.main.get_security_vulnerability_database_apis",
-        mock_get_apis,
-    )
-
     mock_get_args.return_value = arg_namespace
     arg_namespace.version = True
     arg_namespace.output = mock_stream
@@ -613,7 +696,7 @@ def test_main__version(monkeypatch, capsys, arg_namespace) -> None:
     assert exit_code == 0
     out, err = capsys.readouterr()
     mock_version.assert_called_once_with("security-constraints")
-    assert "x.y.z" in out
+    assert FAKE_VERSION in out
     assert not err
     mock_yaml_dump.assert_not_called()
     mock_get_args.assert_called_once_with()
@@ -628,29 +711,19 @@ def test_main__version(monkeypatch, capsys, arg_namespace) -> None:
     [(SecurityConstraintsError, 1), (Exception, 2)],
 )
 def test_main__exception(
-    monkeypatch, arg_namespace, exception_type: Type[Exception], expected_exit_code: int
+    monkeypatch,
+    mock_get_args: Mock,
+    mock_setup_logging: Mock,
+    mock_get_config: Mock,
+    mock_yaml_dump: Mock,
+    mock_get_apis: Mock,
+    mock_filter_vulnerabilities: Mock,
+    arg_namespace: ArgumentNamespace,
+    exception_type: Type[Exception],
+    expected_exit_code: int,
 ) -> None:
     mock_stream = Mock(isatty=Mock(return_value=True))
-    mock_get_args = create_autospec(get_args)
-    mock_setup_logging = create_autospec(setup_logging)
-    mock_get_config = create_autospec(get_config)
-    mock_yaml_dump = create_autospec(yaml.safe_dump)
-    mock_get_apis = create_autospec(get_security_vulnerability_database_apis)
     mock_get_apis.side_effect = exception_type("intentional")
-    mock_filter_vulnerabilities = create_autospec(filter_vulnerabilities)
-
-    monkeypatch.setattr("security_constraints.main.get_args", mock_get_args)
-    monkeypatch.setattr("security_constraints.main.setup_logging", mock_setup_logging)
-    monkeypatch.setattr("security_constraints.main.get_config", mock_get_config)
-    monkeypatch.setattr("security_constraints.main.yaml.safe_dump", mock_yaml_dump)
-    monkeypatch.setattr(
-        "security_constraints.main.get_security_vulnerability_database_apis",
-        mock_get_apis,
-    )
-    monkeypatch.setattr(
-        "security_constraints.main.filter_vulnerabilities", mock_filter_vulnerabilities
-    )
-
     mock_get_args.return_value = arg_namespace
     arg_namespace.output = mock_stream
     arg_namespace.ignore_ids = ["GHSA-X1"]
@@ -669,15 +742,14 @@ def test_main__exception(
     mock_stream.isatty.assert_called_once_with()
 
 
-def test_main__output_none_exception(monkeypatch, arg_namespace) -> None:
-    mock_get_args = create_autospec(get_args)
+def test_main__output_none_exception(
+    mock_get_args: Mock,
+    mock_setup_logging: Mock,
+    mock_get_config: Mock,
+    arg_namespace: ArgumentNamespace,
+) -> None:
     mock_get_args.return_value = arg_namespace
     arg_namespace.output = None
-    mock_setup_logging = create_autospec(setup_logging)
-    mock_get_config = create_autospec(get_config)
-    monkeypatch.setattr("security_constraints.main.get_args", mock_get_args)
-    monkeypatch.setattr("security_constraints.main.setup_logging", mock_setup_logging)
-    monkeypatch.setattr("security_constraints.main.get_config", mock_get_config)
 
     exit_code = main()
 

@@ -7,7 +7,11 @@ import yaml
 from security_constraints.main import main
 
 
-@freezegun.freeze_time(time_to_freeze=datetime.datetime(1986, 4, 9, 12, 11, 10, 9))
+@freezegun.freeze_time(
+    time_to_freeze=datetime.datetime(
+        1986, 4, 9, 12, 11, 10, 9, tzinfo=datetime.timezone.utc
+    )
+)
 def test_main_flow(tmp_path, github_token, monkeypatch, requests_mock) -> None:
     mock_version = Mock(return_value="x.y.z")
     monkeypatch.setattr("security_constraints.main.version", mock_version)
