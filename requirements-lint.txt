@@ -1,6 +1,5 @@
-isort
+ruff
 black
-flake8
 mypy
 types-requests
 types-PyYAML
