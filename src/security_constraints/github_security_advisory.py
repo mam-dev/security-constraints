@@ -2,7 +2,7 @@
 import logging
 import os
 import string
-from typing import Any, Dict, List, Optional, Set
+from typing import TYPE_CHECKING, Any, Dict, List, Optional, Set, cast
 
 import requests
 
@@ -13,6 +13,18 @@ from security_constraints.common import (
     SecurityVulnerabilityDatabaseAPI,
     SeverityLevel,
 )
+
+if TYPE_CHECKING:  # pragma: no cover
+    import sys
+
+    if sys.version_info >= (3, 8):
+        from typing import TypedDict
+    else:
+        from typing_extensions import TypedDict
+
+    class _GraphQlResponseJson(TypedDict, total=False):
+        data: Dict[Any, Any]
+
 
 LOGGER = logging.getLogger(__name__)
 
@@ -75,11 +87,11 @@ class GithubSecurityAdvisoryAPI(SecurityVulnerabilityDatabaseAPI):
         vulnerabilities: List[SecurityVulnerability] = []
         more_data_exists = True
         while more_data_exists:
-            json_response: Dict = self._do_graphql_request(
+            json_response: "_GraphQlResponseJson" = self._do_graphql_request(
                 severities=severities, after=after
             )
             try:
-                json_data: Dict = json_response["data"]
+                json_data: Dict[str, Any] = json_response["data"]
                 vulnerabilities.extend(
                     [
                         SecurityVulnerability(
@@ -107,9 +119,22 @@ class GithubSecurityAdvisoryAPI(SecurityVulnerabilityDatabaseAPI):
 
         return vulnerabilities
 
+    @staticmethod
+    def _verify_graphql_json(response_json: Any) -> "_GraphQlResponseJson":
+        if (
+            not isinstance(response_json, dict)
+            or "data" not in response_json
+            or not isinstance(response_json["data"], dict)
+            or any(not isinstance(key, str) for key in response_json["data"])
+        ):
+            raise FetchVulnerabilitiesError(
+                f"Unexpected json data format in response: {response_json}"
+            )
+        return cast("_GraphQlResponseJson", response_json)
+
     def _do_graphql_request(
         self, severities: Set[SeverityLevel], after: Optional[str] = None
-    ) -> Any:
+    ) -> "_GraphQlResponseJson":
         query = QUERY_TEMPLATE.substitute(
             first=100,
             severities=",".join(sorted([str(severity) for severity in severities])),
@@ -122,7 +147,8 @@ class GithubSecurityAdvisoryAPI(SecurityVulnerabilityDatabaseAPI):
         )
         try:
             response.raise_for_status()
-            return response.json()
+            json_content: Any = response.json()
+            return self._verify_graphql_json(response_json=json_content)
         except requests.HTTPError as error:
             LOGGER.error(
                 "HTTP error (status %s) received from URL %s: %s",

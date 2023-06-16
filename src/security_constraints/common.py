@@ -3,7 +3,18 @@ import abc
 import argparse
 import dataclasses
 import enum
-from typing import IO, TYPE_CHECKING, Any, Dict, List, Optional, Set, get_type_hints
+from typing import (
+    IO,
+    TYPE_CHECKING,
+    Any,
+    Dict,
+    List,
+    Optional,
+    Set,
+    Tuple,
+    TypeVar,
+    get_type_hints,
+)
 
 if TYPE_CHECKING:  # pragma: no cover
     import sys
@@ -68,16 +79,16 @@ class SeverityLevel(str, enum.Enum):
         comparison_method = getattr(self.severity_score, method_name)
         return comparison_method(other.severity_score)  # type: ignore[no-any-return]
 
-    def __gt__(self, other) -> bool:
+    def __gt__(self, other: Any) -> bool:
         return self._compare_as_int("__gt__", other)
 
-    def __lt__(self, other) -> bool:
+    def __lt__(self, other: Any) -> bool:
         return self._compare_as_int("__lt__", other)
 
-    def __ge__(self, other) -> bool:
+    def __ge__(self, other: Any) -> bool:
         return self._compare_as_int("__ge__", other)
 
-    def __le__(self, other) -> bool:
+    def __le__(self, other: Any) -> bool:
         return self._compare_as_int("__le__", other)
 
     def __str__(self) -> str:
@@ -90,12 +101,12 @@ class ArgumentNamespace(argparse.Namespace):
     dump_config: bool
     debug: bool
     version: bool
-    output: Optional[IO]
+    output: Optional[IO[str]]
     ignore_ids: List[str]
     config: Optional[str]
     min_severity: SeverityLevel
 
-    def __setattr__(self, key, value):
+    def __setattr__(self, key: str, value: Any) -> None:
         # Makes it so that no attributes except those type hinted above can be set.
         if key not in get_type_hints(self):
             raise AttributeError(f"No attribute named '{key}'")
@@ -114,6 +125,10 @@ class FetchVulnerabilitiesError(SecurityConstraintsError):
     """Error which occurred when fetching vulnerabilities."""
 
 
+_K = TypeVar("_K", bound=str)
+_V = TypeVar("_V")
+
+
 @dataclasses.dataclass(frozen=True)
 class Configuration:
     """The application configuration.
@@ -126,9 +141,9 @@ class Configuration:
     ignore_ids: Set[str] = dataclasses.field(default_factory=set)
     min_severity: SeverityLevel = dataclasses.field(default=SeverityLevel.CRITICAL)
 
-    def to_dict(self) -> Dict:
-        def _dict_factory(data):
-            def convert(obj):
+    def to_dict(self) -> Dict[str, Any]:
+        def _dict_factory(data: List[Tuple[str, _V]]) -> Dict[str, Any]:
+            def convert(obj: _V) -> Any:
                 if isinstance(obj, enum.Enum):
                     # Use values for Enums
                     return obj.value
@@ -142,7 +157,7 @@ class Configuration:
         return dataclasses.asdict(self, dict_factory=_dict_factory)
 
     @classmethod
-    def from_dict(cls, in_dict: Dict) -> "Configuration":
+    def from_dict(cls, in_dict: Dict[str, Any]) -> "Configuration":
         kwargs: _ConfigurationKwargs = {}
         if "ignore_ids" in in_dict:
             kwargs["ignore_ids"] = set(in_dict["ignore_ids"])

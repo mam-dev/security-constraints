@@ -244,7 +244,7 @@ def main() -> int:
         The program exit code as an integer.
 
     """
-    output: Optional[IO] = None
+    output: Optional[IO[str]] = None
     try:
         args = get_args()
         if args.version:

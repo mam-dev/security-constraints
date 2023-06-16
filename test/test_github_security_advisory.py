@@ -1,14 +1,17 @@
-from typing import Dict, List, Set
+from typing import TYPE_CHECKING, Any, Dict, List, Set
 
 import pytest
 
-from security_constraints.common import SeverityLevel
-from security_constraints.github_security_advisory import (
+from security_constraints.common import (
     FailedPrerequisitesError,
     FetchVulnerabilitiesError,
-    GithubSecurityAdvisoryAPI,
     SecurityVulnerability,
+    SeverityLevel,
 )
+from security_constraints.github_security_advisory import GithubSecurityAdvisoryAPI
+
+if TYPE_CHECKING:
+    from requests_mock import Mocker as RequestsMock
 
 
 def test_instantiate_without_token_in_env() -> None:
@@ -16,7 +19,7 @@ def test_instantiate_without_token_in_env() -> None:
         _ = GithubSecurityAdvisoryAPI()
 
 
-def test_get_database_name(github_token) -> None:
+def test_get_database_name(github_token: str) -> None:
     assert GithubSecurityAdvisoryAPI().get_database_name() == "Github Security Advisory"
 
 
@@ -32,8 +35,8 @@ def test_get_database_name(github_token) -> None:
     ],
 )
 def test_get_vulnerabilities(
-    github_token,
-    requests_mock,
+    github_token: str,
+    requests_mock: "RequestsMock",
     severities: Set[SeverityLevel],
     expected_graphql_severities: str,
 ) -> None:
@@ -44,7 +47,7 @@ def test_get_vulnerabilities(
         "Y3Vyc29yOnYyOpK5MjAyMC0wOS0yNVQxOTo0MjowMCswMHowMM0LeQ==",
     )
     expected_vulnerabilities: List[SecurityVulnerability] = []
-    vulnerability_nodes: List[Dict] = []
+    vulnerability_nodes: List[Dict[str, Any]] = []
     for request_index in range(3):
         for i in range(100 if request_index < 2 else 41):
             ghsa = f"GHSA-{request_index}-{i}"
@@ -131,7 +134,9 @@ def test_get_vulnerabilities(
     ]
 
 
-def test_get_vulnerabilities__http_error(github_token, requests_mock) -> None:
+def test_get_vulnerabilities__http_error(
+    github_token: str, requests_mock: "RequestsMock"
+) -> None:
     requests_mock.post(
         "https://api.github.com/graphql",
         status_code=500,
@@ -141,10 +146,15 @@ def test_get_vulnerabilities__http_error(github_token, requests_mock) -> None:
         _ = api.get_vulnerabilities(severities={SeverityLevel.CRITICAL})
 
 
-def test_get_vulnerabilities__malformed_data(github_token, requests_mock) -> None:
+@pytest.mark.parametrize(
+    "json_content", [{"data": {"error": "something went wrong"}}, {}, "xyz"]
+)
+def test_get_vulnerabilities__malformed_data(
+    github_token: str, requests_mock: "RequestsMock", json_content: Any
+) -> None:
     requests_mock.post(
         "https://api.github.com/graphql",
-        json={"data": {"error": "something went wrong"}},
+        json=json_content,
         request_headers={"Authorization": f"bearer {github_token}"},
     )
 
@@ -153,10 +163,12 @@ def test_get_vulnerabilities__malformed_data(github_token, requests_mock) -> Non
         _ = api.get_vulnerabilities(severities={SeverityLevel.CRITICAL})
 
 
-def test_get_vulnerabilities__json_decode_error(github_token, requests_mock) -> None:
+def test_get_vulnerabilities__json_decode_error(
+    github_token: str, requests_mock: "RequestsMock"
+) -> None:
     requests_mock.post(
         "https://api.github.com/graphql",
-        body=r"",
+        text="",
         request_headers={"Authorization": f"bearer {github_token}"},
     )
 

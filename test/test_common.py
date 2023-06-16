@@ -109,7 +109,7 @@ def test_severity_level_ge(
     assert (first >= second) == expected
 
 
-def test_argument_namespace_can_be_modified(arg_namespace) -> None:
+def test_argument_namespace_can_be_modified(arg_namespace: ArgumentNamespace) -> None:
     arg_namespace.dump_config = True
     assert arg_namespace.dump_config
     arg_namespace.debug = True
@@ -127,7 +127,9 @@ def test_argument_namespace_can_be_modified(arg_namespace) -> None:
     assert arg_namespace.min_severity == SeverityLevel.HIGH
 
 
-def test_argument_namespace_cannot_be_extended(arg_namespace) -> None:
+def test_argument_namespace_cannot_be_extended(
+    arg_namespace: ArgumentNamespace,
+) -> None:
     with pytest.raises(AttributeError):
         arg_namespace.does_not_exist = True
 
