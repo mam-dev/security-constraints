@@ -3,6 +3,7 @@ import abc
 import argparse
 import dataclasses
 import enum
+import sys
 from typing import (
     IO,
     TYPE_CHECKING,
@@ -12,12 +13,17 @@ from typing import (
     Optional,
     Set,
     Tuple,
+    Type,
     get_type_hints,
 )
 
-if TYPE_CHECKING:  # pragma: no cover
-    import sys
+if sys.version_info >= (3, 11):
+    from typing import Self  # pragma: no cover (<py311)
+else:
+    from typing_extensions import Self  # pragma: no cover (>=py311)
 
+
+if TYPE_CHECKING:  # pragma: no cover
     if sys.version_info >= (3, 8):
         from typing import TypedDict
     else:
@@ -37,7 +43,7 @@ class SeverityLevel(str, enum.Enum):
     LOW = "LOW"
 
     @classmethod
-    def _missing_(cls, value: object) -> Optional["SeverityLevel"]:
+    def _missing_(cls: Type[Self], value: object) -> Optional[Self]:
         # Makes instantiation case-insensitive
         if isinstance(value, str):
             for member in cls:
@@ -45,10 +51,10 @@ class SeverityLevel(str, enum.Enum):
                     return member
         return None
 
-    def get_higher_or_equal_severities(self) -> Set["SeverityLevel"]:
+    def get_higher_or_equal_severities(self: Self) -> Set[Self]:
         """Get a set containing this SeverityLevel and all higher ones."""
         return {
-            SeverityLevel(value)
+            type(self)(value)
             for value in type(self).__members__.values()
             if self.severity_score <= SeverityLevel(value).severity_score
         }
@@ -152,7 +158,7 @@ class Configuration:
         return dataclasses.asdict(self, dict_factory=_dict_factory)
 
     @classmethod
-    def from_dict(cls, in_dict: Dict[str, Any]) -> "Configuration":
+    def from_dict(cls: Type[Self], in_dict: Dict[str, Any]) -> Self:
         kwargs: _ConfigurationKwargs = {}
         if "ignore_ids" in in_dict:
             kwargs["ignore_ids"] = set(in_dict["ignore_ids"])
@@ -161,14 +167,14 @@ class Configuration:
         return cls(**kwargs)
 
     @classmethod
-    def from_args(cls, args: ArgumentNamespace) -> "Configuration":
+    def from_args(cls: Type[Self], args: ArgumentNamespace) -> Self:
         return cls(
             ignore_ids=set(args.ignore_ids),
             min_severity=args.min_severity,
         )
 
     @classmethod
-    def merge(cls, *config: "Configuration") -> "Configuration":
+    def merge(cls: Type[Self], *config: Self) -> Self:
         """Merge multiple Configurations into a new one."""
         all_ignore_ids_entries = (c.ignore_ids for c in config)
         all_min_severity_entries = (c.min_severity for c in config)
@@ -178,7 +184,7 @@ class Configuration:
         )
 
     @classmethod
-    def supported_keys(cls) -> List[str]:
+    def supported_keys(cls: Type[Self]) -> List[str]:
         """Return a list of keys which are supported in the config file."""
         return list(cls().to_dict().keys())
 
@@ -189,7 +195,7 @@ class PackageConstraints:
 
     Attributes:
         package: The name of the package.
-        specifies: A list of version specifiers, e.g. ">3.0".
+        specifiers: A list of version specifiers, e.g. ">3.0".
 
     """
 
