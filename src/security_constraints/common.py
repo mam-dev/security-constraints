@@ -3,13 +3,19 @@ import abc
 import argparse
 import dataclasses
 import enum
-import sys
-from typing import IO, Any, Dict, List, Optional, Set, get_type_hints
+from typing import IO, TYPE_CHECKING, Any, Dict, List, Optional, Set, get_type_hints
 
-if sys.version_info >= (3, 8):
-    from typing import TypedDict  # pragma: no cover
-else:
-    from typing_extensions import TypedDict  # pragma: no cover
+if TYPE_CHECKING:  # pragma: no cover
+    import sys
+
+    if sys.version_info >= (3, 8):
+        from typing import TypedDict
+    else:
+        from typing_extensions import TypedDict
+
+    class _ConfigurationKwargs(TypedDict, total=False):
+        ignore_ids: Set[str]
+        min_severity: "SeverityLevel"
 
 
 class SeverityLevel(str, enum.Enum):
@@ -137,11 +143,7 @@ class Configuration:
 
     @classmethod
     def from_dict(cls, in_dict: Dict) -> "Configuration":
-        class Kwargs(TypedDict, total=False):
-            ignore_ids: Set[str]
-            min_severity: SeverityLevel
-
-        kwargs: Kwargs = {}
+        kwargs: _ConfigurationKwargs = {}
         if "ignore_ids" in in_dict:
             kwargs["ignore_ids"] = set(in_dict["ignore_ids"])
         if "min_severity" in in_dict:
