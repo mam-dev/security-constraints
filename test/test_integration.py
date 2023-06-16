@@ -1,3 +1,4 @@
+from typing import TYPE_CHECKING
 from unittest.mock import Mock
 
 import pytest
@@ -5,10 +6,21 @@ import yaml
 
 from security_constraints.main import main
 
+if TYPE_CHECKING:
+    from pathlib import Path
+
+    from _pytest.monkeypatch import MonkeyPatch
+    from requests_mock import Mocker as RequestsMock
+
 
 @pytest.mark.integration_test
 def test_main_flow(
-    frozen_time, tmp_path, github_token, monkeypatch, mock_version: Mock, requests_mock
+    frozen_time: None,
+    tmp_path: "Path",
+    github_token: str,
+    monkeypatch: "MonkeyPatch",
+    mock_version: Mock,
+    requests_mock: "RequestsMock",
 ) -> None:
     output_file = str(tmp_path / "output")
     config_file = str(tmp_path / "sc-conf.yaml")
