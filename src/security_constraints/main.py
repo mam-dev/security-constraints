@@ -292,6 +292,6 @@ def main() -> int:
         return 2
     else:
         return 0
-    finally:  # pragma: no cover (py39)
+    finally:  # pragma: no cover (py38 or py39)
         if output is not None and not output.isatty():
             output.close()
