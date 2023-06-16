@@ -1,4 +1,4 @@
-from typing import List, Set
+from typing import Any, List, Set
 from unittest.mock import Mock
 
 import pytest
@@ -24,8 +24,19 @@ def test_severity_level_case_insensitive(raw_severity: SeverityLevel) -> None:
     )
 
 
+@pytest.mark.parametrize("input_value", ["fake", 13])
+def test_severity_level_bad_value(input_value: Any) -> None:
+    with pytest.raises(ValueError, match=str(input_value)):
+        _ = SeverityLevel(input_value)
+
+
 def test_severity_level_supported_values() -> None:
     assert SeverityLevel.supported_values() == ["CRITICAL", "HIGH", "MODERATE", "LOW"]
+
+
+def test_severity_level_compare_with_other_type() -> None:
+    with pytest.raises(TypeError):
+        _ = SeverityLevel.CRITICAL > 5
 
 
 @pytest.mark.parametrize(
@@ -68,6 +79,34 @@ def test_get_higher_or_equal_severities(
     severity: SeverityLevel, expected: Set[SeverityLevel]
 ) -> None:
     assert severity.get_higher_or_equal_severities() == expected
+
+
+@pytest.mark.parametrize(
+    "first, second, expected",
+    [
+        (SeverityLevel.CRITICAL, SeverityLevel.CRITICAL, True),
+        (SeverityLevel.CRITICAL, SeverityLevel.MODERATE, False),
+        (SeverityLevel.LOW, SeverityLevel.MODERATE, True),
+    ],
+)
+def test_severity_level_le(
+    first: SeverityLevel, second: SeverityLevel, expected: bool
+) -> None:
+    assert (first <= second) == expected
+
+
+@pytest.mark.parametrize(
+    "first, second, expected",
+    [
+        (SeverityLevel.CRITICAL, SeverityLevel.CRITICAL, True),
+        (SeverityLevel.CRITICAL, SeverityLevel.MODERATE, True),
+        (SeverityLevel.LOW, SeverityLevel.MODERATE, False),
+    ],
+)
+def test_severity_level_ge(
+    first: SeverityLevel, second: SeverityLevel, expected: bool
+) -> None:
+    assert (first >= second) == expected
 
 
 def test_argument_namespace_can_be_modified(arg_namespace) -> None:
@@ -114,6 +153,13 @@ def test_configuration_from_dict__no_min_severity_in_config() -> None:
     assert created_from_dict == Configuration(
         ignore_ids=IGNORE_IDS, min_severity=SeverityLevel.CRITICAL
     )
+    assert isinstance(created_from_dict.min_severity, SeverityLevel)
+
+
+def test_configuration_from_dict__empty() -> None:
+    created_from_dict = Configuration.from_dict({})
+    assert created_from_dict == Configuration()
+    assert isinstance(created_from_dict.ignore_ids, set)
     assert isinstance(created_from_dict.min_severity, SeverityLevel)
 
 

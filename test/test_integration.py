@@ -1,10 +1,12 @@
 from unittest.mock import Mock
 
+import pytest
 import yaml
 
 from security_constraints.main import main
 
 
+@pytest.mark.integration_test
 def test_main_flow(
     frozen_time, tmp_path, github_token, monkeypatch, mock_version: Mock, requests_mock
 ) -> None:

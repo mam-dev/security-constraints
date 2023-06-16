@@ -5,9 +5,9 @@ import sys
 from datetime import datetime, timezone
 
 if sys.version_info >= (3, 8):
-    from importlib.metadata import version
+    from importlib.metadata import version  # pragma: no cover (<py38)
 else:
-    from importlib_metadata import version
+    from importlib_metadata import version  # pragma: no cover (>=py38)
 
 from typing import IO, List, Optional, Sequence, Set
 
@@ -292,6 +292,6 @@ def main() -> int:
         return 2
     else:
         return 0
-    finally:
+    finally:  # pragma: no cover (py38 or py39)
         if output is not None and not output.isatty():
             output.close()

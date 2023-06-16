@@ -1,3 +1,7 @@
 pytest
+pytest-cov
+coverage_pyver_pragma
+pytest-random-order
+pytest-integration
 requests-mock
 freezegun
