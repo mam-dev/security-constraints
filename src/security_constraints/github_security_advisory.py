@@ -2,7 +2,7 @@
 import logging
 import os
 import string
-from typing import TYPE_CHECKING, Any, Dict, List, Optional, Set, cast
+from typing import TYPE_CHECKING, Any, Dict, List, Optional, Set
 
 import requests
 
@@ -24,6 +24,21 @@ if TYPE_CHECKING:  # pragma: no cover
 
     class _GraphQlResponseJson(TypedDict, total=False):
         data: Dict[Any, Any]
+
+    if sys.version_info >= (3, 10):
+        from typing import TypeGuard
+    else:
+        from typing_extensions import TypeGuard
+
+
+def _is_graphql_response_json(
+    response_json: Any,
+) -> "TypeGuard[_GraphQlResponseJson]":
+    return (
+        isinstance(response_json, dict)
+        and isinstance(response_json.get("data"), dict)
+        and all(isinstance(key, str) for key in response_json["data"])
+    )
 
 
 LOGGER = logging.getLogger(__name__)
@@ -119,19 +134,6 @@ class GithubSecurityAdvisoryAPI(SecurityVulnerabilityDatabaseAPI):
 
         return vulnerabilities
 
-    @staticmethod
-    def _verify_graphql_json(response_json: Any) -> "_GraphQlResponseJson":
-        if (
-            not isinstance(response_json, dict)
-            or "data" not in response_json
-            or not isinstance(response_json["data"], dict)
-            or any(not isinstance(key, str) for key in response_json["data"])
-        ):
-            raise FetchVulnerabilitiesError(
-                f"Unexpected json data format in response: {response_json}"
-            )
-        return cast("_GraphQlResponseJson", response_json)
-
     def _do_graphql_request(
         self, severities: Set[SeverityLevel], after: Optional[str] = None
     ) -> "_GraphQlResponseJson":
@@ -148,7 +150,10 @@ class GithubSecurityAdvisoryAPI(SecurityVulnerabilityDatabaseAPI):
         try:
             response.raise_for_status()
             json_content: Any = response.json()
-            return self._verify_graphql_json(response_json=json_content)
+            if not _is_graphql_response_json(response_json=json_content):
+                raise FetchVulnerabilitiesError(
+                    f"Unexpected json data format in response: {json_content}"
+                )
         except requests.HTTPError as error:
             LOGGER.error(
                 "HTTP error (status %s) received from URL %s: %s",
@@ -160,3 +165,5 @@ class GithubSecurityAdvisoryAPI(SecurityVulnerabilityDatabaseAPI):
         except requests.JSONDecodeError as error:
             LOGGER.error("Could not decode json data in response: %s", response.text)
             raise FetchVulnerabilitiesError from error
+        else:
+            return json_content
