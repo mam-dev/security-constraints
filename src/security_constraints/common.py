@@ -12,7 +12,6 @@ from typing import (
     Optional,
     Set,
     Tuple,
-    TypeVar,
     get_type_hints,
 )
 
@@ -125,10 +124,6 @@ class FetchVulnerabilitiesError(SecurityConstraintsError):
     """Error which occurred when fetching vulnerabilities."""
 
 
-_K = TypeVar("_K", bound=str)
-_V = TypeVar("_V")
-
-
 @dataclasses.dataclass(frozen=True)
 class Configuration:
     """The application configuration.
@@ -142,8 +137,8 @@ class Configuration:
     min_severity: SeverityLevel = dataclasses.field(default=SeverityLevel.CRITICAL)
 
     def to_dict(self) -> Dict[str, Any]:
-        def _dict_factory(data: List[Tuple[str, _V]]) -> Dict[str, Any]:
-            def convert(obj: _V) -> Any:
+        def _dict_factory(data: List[Tuple[str, Any]]) -> Dict[str, Any]:
+            def convert(obj: Any) -> Any:
                 if isinstance(obj, enum.Enum):
                     # Use values for Enums
                     return obj.value
