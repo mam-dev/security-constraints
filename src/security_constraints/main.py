@@ -3,12 +3,7 @@ import argparse
 import logging
 import sys
 from datetime import datetime, timezone
-
-if sys.version_info >= (3, 8):
-    from importlib.metadata import version  # pragma: no cover (<py38)
-else:
-    from importlib_metadata import version  # pragma: no cover (>=py38)
-
+from importlib.metadata import version
 from typing import IO, List, Optional, Sequence, Set
 
 import yaml

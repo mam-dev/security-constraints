@@ -16,11 +16,7 @@ from security_constraints.common import (
 
 if TYPE_CHECKING:  # pragma: no cover
     import sys
-
-    if sys.version_info >= (3, 8):
-        from typing import TypedDict
-    else:
-        from typing_extensions import TypedDict
+    from typing import TypedDict
 
     class _GraphQlResponseJson(TypedDict, total=False):
         data: Dict[Any, Any]

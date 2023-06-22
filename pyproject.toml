@@ -4,11 +4,10 @@ description = "Fetches security vulnerabilities and creates pip-constraints base
 readme = "README.md"
 license = {file = "LICENSE"}
 urls = {repo = "https://github.com/mam-dev/security-constraints"}
-requires-python = ">=3.7"
+requires-python = ">=3.8"
 dependencies = [
     "requests",
     "pyyaml",
-    "importlib-metadata >= 1.0 ; python_version < '3.8'"
 ]
 dynamic = ["version"]
 
