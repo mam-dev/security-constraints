@@ -27,4 +27,4 @@ jobs:
     - name: System test
       env:
         SC_GITHUB_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
-      run: ./test/system-test/system_test.sh
+      run: ./test/system_test/system_test.sh
