@@ -149,7 +149,7 @@ class Configuration:
         return dataclasses.asdict(self, dict_factory=_dict_factory)
 
     @classmethod
-    def from_dict(cls: type[Self], in_dict: dict[str, Any]) -> Self:
+    def from_dict(cls, in_dict: dict[str, Any]) -> Self:
         kwargs: _ConfigurationKwargs = {}
         if "ignore_ids" in in_dict:
             kwargs["ignore_ids"] = set(in_dict["ignore_ids"])
@@ -158,14 +158,14 @@ class Configuration:
         return cls(**kwargs)
 
     @classmethod
-    def from_args(cls: type[Self], args: ArgumentNamespace) -> Self:
+    def from_args(cls, args: ArgumentNamespace) -> Self:
         return cls(
             ignore_ids=set(args.ignore_ids),
             min_severity=args.min_severity,
         )
 
     @classmethod
-    def merge(cls: type[Self], *config: Self) -> Self:
+    def merge(cls, *config: Self) -> Self:
         """Merge multiple Configurations into a new one."""
         all_ignore_ids_entries = (c.ignore_ids for c in config)
         all_min_severity_entries = (c.min_severity for c in config)
@@ -175,7 +175,7 @@ class Configuration:
         )
 
     @classmethod
-    def supported_keys(cls: type[Self]) -> list[str]:
+    def supported_keys(cls) -> list[str]:
         """Return a list of keys which are supported in the config file."""
         return list(cls().to_dict().keys())
 
