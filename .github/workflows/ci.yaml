@@ -24,3 +24,7 @@ jobs:
         python -m pip install tox==4.* tox-gh-actions==3.*
     - name: Run tox
       run: tox
+    - name: System test
+      env:
+        SC_GITHUB_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
+      run: ./test/system_test/system_test.sh
