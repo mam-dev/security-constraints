@@ -5,21 +5,14 @@ import abc
 import argparse
 import dataclasses
 import enum
-import sys
 from typing import (
     IO,
     TYPE_CHECKING,
     Any,
-    Dict,
-    List,
-    Optional,
-    Set,
-    Tuple,
-    Type,
-    get_type_hints,
 )
 
 if TYPE_CHECKING:  # pragma: no cover
+    import sys
     from typing import TypedDict
 
     if sys.version_info >= (3, 11):
@@ -28,8 +21,8 @@ if TYPE_CHECKING:  # pragma: no cover
         from typing_extensions import Self  # pragma: no cover (>=py311)
 
     class _ConfigurationKwargs(TypedDict, total=False):
-        ignore_ids: Set[str]
-        min_severity: "SeverityLevel"
+        ignore_ids: set[str]
+        min_severity: SeverityLevel
 
 
 class SeverityLevel(str, enum.Enum):
@@ -41,7 +34,7 @@ class SeverityLevel(str, enum.Enum):
     LOW = "LOW"
 
     @classmethod
-    def _missing_(cls, value: object) -> Optional[Self]:
+    def _missing_(cls, value: object) -> Self | None:
         # Makes instantiation case-insensitive
         if isinstance(value, str):
             for member in cls:
@@ -49,7 +42,7 @@ class SeverityLevel(str, enum.Enum):
                     return member
         return None
 
-    def get_higher_or_equal_severities(self) -> Set[Self]:
+    def get_higher_or_equal_severities(self) -> set[Self]:
         """Get a set containing this SeverityLevel and all higher ones."""
         return {
             type(self)(value)
@@ -58,7 +51,7 @@ class SeverityLevel(str, enum.Enum):
         }
 
     @classmethod
-    def supported_values(cls) -> List[str]:
+    def supported_values(cls) -> list[str]:
         """Return a list of the supported severity values."""
         return [str(v) for v in cls]
 
@@ -104,9 +97,9 @@ class ArgumentNamespace(argparse.Namespace):
     dump_config: bool
     debug: bool
     version: bool
-    output: Optional[IO[str]]
-    ignore_ids: List[str]
-    config: Optional[str]
+    output: IO[str] | None
+    ignore_ids: list[str]
+    config: str | None
     min_severity: SeverityLevel
 
     def __setattr__(self, key: str, value: Any) -> None:
@@ -137,11 +130,11 @@ class Configuration:
 
     """
 
-    ignore_ids: Set[str] = dataclasses.field(default_factory=set)
+    ignore_ids: set[str] = dataclasses.field(default_factory=set)
     min_severity: SeverityLevel = dataclasses.field(default=SeverityLevel.CRITICAL)
 
-    def to_dict(self) -> Dict[str, Any]:
-        def _dict_factory(data: List[Tuple[str, Any]]) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
+        def _dict_factory(data: list[tuple[str, Any]]) -> dict[str, Any]:
             def convert(obj: Any) -> Any:
                 if isinstance(obj, enum.Enum):
                     # Use values for Enums
@@ -156,7 +149,7 @@ class Configuration:
         return dataclasses.asdict(self, dict_factory=_dict_factory)
 
     @classmethod
-    def from_dict(cls: Type[Self], in_dict: Dict[str, Any]) -> Self:
+    def from_dict(cls: type[Self], in_dict: dict[str, Any]) -> Self:
         kwargs: _ConfigurationKwargs = {}
         if "ignore_ids" in in_dict:
             kwargs["ignore_ids"] = set(in_dict["ignore_ids"])
@@ -165,14 +158,14 @@ class Configuration:
         return cls(**kwargs)
 
     @classmethod
-    def from_args(cls: Type[Self], args: ArgumentNamespace) -> Self:
+    def from_args(cls: type[Self], args: ArgumentNamespace) -> Self:
         return cls(
             ignore_ids=set(args.ignore_ids),
             min_severity=args.min_severity,
         )
 
     @classmethod
-    def merge(cls: Type[Self], *config: Self) -> Self:
+    def merge(cls: type[Self], *config: Self) -> Self:
         """Merge multiple Configurations into a new one."""
         all_ignore_ids_entries = (c.ignore_ids for c in config)
         all_min_severity_entries = (c.min_severity for c in config)
@@ -182,7 +175,7 @@ class Configuration:
         )
 
     @classmethod
-    def supported_keys(cls: Type[Self]) -> List[str]:
+    def supported_keys(cls: type[Self]) -> list[str]:
         """Return a list of keys which are supported in the config file."""
         return list(cls().to_dict().keys())
 
@@ -198,7 +191,7 @@ class PackageConstraints:
     """
 
     package: str
-    specifiers: List[str] = dataclasses.field(default_factory=list)
+    specifiers: list[str] = dataclasses.field(default_factory=list)
 
     def __str__(self) -> str:
         return f"{self.package}{','.join(self.specifiers)}"
@@ -241,6 +234,6 @@ class SecurityVulnerabilityDatabaseAPI(abc.ABC):
 
     @abc.abstractmethod
     def get_vulnerabilities(
-        self, severities: Set[SeverityLevel]
-    ) -> List[SecurityVulnerability]:
+        self, severities: set[SeverityLevel]
+    ) -> list[SecurityVulnerability]:
         """Fetch and return all relevant security vulnerabilities from the database."""
