@@ -104,7 +104,7 @@ class ArgumentNamespace(argparse.Namespace):
 
     def __setattr__(self, key: str, value: Any) -> None:
         # Makes it so that no attributes except those type hinted above can be set.
-        if key not in self.__annotations__: #get_type_hints(self):
+        if key not in self.__annotations__:  # get_type_hints(self):
             raise AttributeError(f"No attribute named '{key}'")
         super().__setattr__(key, value)
 
