@@ -1,4 +1,6 @@
 """This module contains common definitions for use in any other module."""
+from __future__ import annotations
+
 import abc
 import argparse
 import dataclasses
@@ -17,14 +19,13 @@ from typing import (
     get_type_hints,
 )
 
-if sys.version_info >= (3, 11):
-    from typing import Self  # pragma: no cover (<py311)
-else:
-    from typing_extensions import Self  # pragma: no cover (>=py311)
-
-
 if TYPE_CHECKING:  # pragma: no cover
     from typing import TypedDict
+
+    if sys.version_info >= (3, 11):
+        from typing import Self  # pragma: no cover (<py311)
+    else:
+        from typing_extensions import Self  # pragma: no cover (>=py311)
 
     class _ConfigurationKwargs(TypedDict, total=False):
         ignore_ids: Set[str]
@@ -40,7 +41,7 @@ class SeverityLevel(str, enum.Enum):
     LOW = "LOW"
 
     @classmethod
-    def _missing_(cls: Type[Self], value: object) -> Optional[Self]:
+    def _missing_(cls, value: object) -> Optional[Self]:
         # Makes instantiation case-insensitive
         if isinstance(value, str):
             for member in cls:
@@ -48,7 +49,7 @@ class SeverityLevel(str, enum.Enum):
                     return member
         return None
 
-    def get_higher_or_equal_severities(self: Self) -> Set[Self]:
+    def get_higher_or_equal_severities(self) -> Set[Self]:
         """Get a set containing this SeverityLevel and all higher ones."""
         return {
             type(self)(value)
@@ -110,7 +111,7 @@ class ArgumentNamespace(argparse.Namespace):
 
     def __setattr__(self, key: str, value: Any) -> None:
         # Makes it so that no attributes except those type hinted above can be set.
-        if key not in get_type_hints(self):
+        if key not in self.__annotations__: #get_type_hints(self):
             raise AttributeError(f"No attribute named '{key}'")
         super().__setattr__(key, value)
 
