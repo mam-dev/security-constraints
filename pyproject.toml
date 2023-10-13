@@ -19,6 +19,7 @@ classifiers = [
   "Programming Language :: Python :: 3.9",
   "Programming Language :: Python :: 3.10",
   "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
   "Topic :: Security",
   "License :: OSI Approved :: Apache Software License",
 ]
@@ -73,7 +74,7 @@ disallow_untyped_decorators = true
 no_implicit_optional = true
 no_implicit_reexport = true
 strict_equality = true
-strict_concatenate = true
+extra_checks = true
 
 [tool.ruff]
 src = ["src", "test"]

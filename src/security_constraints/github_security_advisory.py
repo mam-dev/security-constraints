@@ -125,7 +125,6 @@ class GithubSecurityAdvisoryAPI(SecurityVulnerabilityDatabaseAPI):
                 after = json_data["securityVulnerabilities"]["pageInfo"]["endCursor"]
             except KeyError as missing_key:
                 error_msg = f"Key {missing_key} not found in: {json_response}"
-                LOGGER.error(error_msg)
                 raise FetchVulnerabilitiesError(error_msg) from None
 
         return vulnerabilities
@@ -138,6 +137,8 @@ class GithubSecurityAdvisoryAPI(SecurityVulnerabilityDatabaseAPI):
             severities=",".join(sorted([str(severity) for severity in severities])),
             additional=f'after:"{after}"' if after is not None else "",
         )
+        LOGGER.debug("GraphQL query: %s", query)
+        LOGGER.debug("Sending request to %s", self.URL)
         response: requests.Response = self._session.post(
             url=self.URL,
             headers={"Authorization": f"bearer {self._token}"},
@@ -151,15 +152,17 @@ class GithubSecurityAdvisoryAPI(SecurityVulnerabilityDatabaseAPI):
                     f"Unexpected json data format in response: {json_content}"
                 )
         except requests.HTTPError as error:
-            LOGGER.error(
-                "HTTP error (status %s) received from URL %s: %s",
-                response.status_code,
-                self.URL,
-                error,
+            error_msg = (
+                "HTTP error (status {status}) received from URL {url}: {err}".format(
+                    status=response.status_code,
+                    url=self.URL,
+                    err=error,
+                )
             )
-            raise FetchVulnerabilitiesError from error
+            raise FetchVulnerabilitiesError(error_msg) from error
         except requests.JSONDecodeError as error:
-            LOGGER.error("Could not decode json data in response: %s", response.text)
-            raise FetchVulnerabilitiesError from error
+            error_msg = f"Could not decode json data in response: {response.text}"
+            raise FetchVulnerabilitiesError(error_msg) from error
         else:
+            LOGGER.debug("Request to %s was successful", self.URL)
             return json_content

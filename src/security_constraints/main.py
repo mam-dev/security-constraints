@@ -277,8 +277,8 @@ def main() -> int:
                 output.write(
                     f"{format_constraints_file_line(constraints, vulnerability)}\n"
                 )
-    except SecurityConstraintsError as error:
-        LOGGER.error(error)
+    except SecurityConstraintsError:
+        LOGGER.exception("Program exited with an exception.")
         return 1
     except Exception as error:
         LOGGER.critical(
