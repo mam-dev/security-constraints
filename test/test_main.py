@@ -329,12 +329,59 @@ def test_filter_vulnerabilities(
             ],
         ),
         ([], []),
+        (
+            [
+                SecurityVulnerability(
+                    name="CVE-2",
+                    identifier="GHSA-2",
+                    package="pybanana",
+                    vulnerable_range="= 2.0",
+                ),
+                SecurityVulnerability(
+                    name="CVE-3U",
+                    identifier="GHSA-3",
+                    package="pypeel",
+                    vulnerable_range="< 3.0dev1",
+                ),
+                SecurityVulnerability(
+                    name="CVE-1",
+                    identifier="GHSA-1",
+                    package="pybanana",
+                    vulnerable_range="= 1.0",
+                ),
+            ],
+            [
+                SecurityVulnerability(
+                    name="CVE-1",
+                    identifier="GHSA-1",
+                    package="pybanana",
+                    vulnerable_range="= 1.0",
+                ),
+                SecurityVulnerability(
+                    name="CVE-2",
+                    identifier="GHSA-2",
+                    package="pybanana",
+                    vulnerable_range="= 2.0",
+                ),
+                SecurityVulnerability(
+                    name="CVE-3U",
+                    identifier="GHSA-3",
+                    package="pypeel",
+                    vulnerable_range="< 3.0dev1",
+                ),
+            ],
+        ),
     ],
+    ids=["sort by package", "empty", "sub-sort by identifier"],
 )
 def test_sort_vulnerabilities(
     vulnerabilities: List[SecurityVulnerability], expected: List[SecurityVulnerability]
 ) -> None:
+    original_vulnerabilities = vulnerabilities.copy()
     assert sort_vulnerabilities(vulnerabilities=vulnerabilities) == expected
+    assert (
+        vulnerabilities == original_vulnerabilities
+    ), "input list was altered in-place"
 
 
 @pytest.mark.parametrize(

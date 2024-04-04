@@ -56,7 +56,9 @@ def sort_vulnerabilities(
     vulnerabilities: List[SecurityVulnerability],
 ) -> List[SecurityVulnerability]:
     """Sort vulnerabilities into the order they should appear in the constraints."""
-    return sorted(vulnerabilities, key=lambda v: v.package)
+    sorted_vulnerabilities = sorted(vulnerabilities, key=lambda v: v.identifier)
+    sorted_vulnerabilities.sort(key=lambda v: v.package)
+    return sorted_vulnerabilities
 
 
 def get_safe_version_constraints(

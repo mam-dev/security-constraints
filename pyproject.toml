@@ -78,6 +78,8 @@ extra_checks = true
 
 [tool.ruff]
 src = ["src", "test"]
+
+[tool.ruff.lint]
 select = [
   "E",   # pycodestyle
   "F",   # pyflakes
@@ -115,9 +117,10 @@ ignore = [
   "D100", "D102", "D103", "D104", "D105", "D107",
   "PTH123",
   "TRY003", "TRY301",
+  "UP032",
 ]
 
-[tool.ruff.per-file-ignores]
+[tool.ruff.lint.per-file-ignores]
 "test/**/*.py" = [
   "S101", "S105",
   "D103",
@@ -127,14 +130,14 @@ ignore = [
   "ARG001",
 ]
 
-[tool.ruff.pydocstyle]
+[tool.ruff.lint.pydocstyle]
 convention = "google"
 
-[tool.ruff.flake8-pytest-style]
+[tool.ruff.lint.flake8-pytest-style]
 fixture-parentheses = false
 mark-parentheses = false
 parametrize-names-type = "csv"
 parametrize-values-type = "list"
 
-[tool.ruff.flake8-tidy-imports]
+[tool.ruff.lint.flake8-tidy-imports]
 ban-relative-imports = "parents"
