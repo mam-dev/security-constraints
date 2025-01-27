@@ -1,4 +1,4 @@
-from typing import Any, List, Set
+from typing import Any
 from unittest.mock import Mock
 
 import pytest
@@ -50,7 +50,7 @@ def test_severity_level_compare_with_other_type() -> None:
     ],
 )
 def test_sort_severity_levels(
-    severities: List[SeverityLevel], expected: List[SeverityLevel]
+    severities: list[SeverityLevel], expected: list[SeverityLevel]
 ) -> None:
     assert sorted(severities) == expected
 
@@ -76,7 +76,7 @@ def test_sort_severity_levels(
     ],
 )
 def test_get_higher_or_equal_severities(
-    severity: SeverityLevel, expected: Set[SeverityLevel]
+    severity: SeverityLevel, expected: set[SeverityLevel]
 ) -> None:
     assert severity.get_higher_or_equal_severities() == expected
 
@@ -225,7 +225,7 @@ def test_configuration_from_args() -> None:
     ],
 )
 def test_configuration_merge(
-    configs: List[Configuration], expected: Configuration
+    configs: list[Configuration], expected: Configuration
 ) -> None:
     assert Configuration.merge(*configs) == expected
 
@@ -244,7 +244,7 @@ def test_configuration_supported_keys() -> None:
     ],
 )
 def test_package_constraints_str(
-    package: str, specifiers: List[str], expected: str
+    package: str, specifiers: list[str], expected: str
 ) -> None:
     assert str(PackageConstraints(package=package, specifiers=specifiers)) == expected
 

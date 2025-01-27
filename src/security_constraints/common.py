@@ -1,4 +1,5 @@
 """This module contains common definitions for use in any other module."""
+
 from __future__ import annotations
 
 import abc

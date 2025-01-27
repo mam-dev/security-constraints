@@ -1,7 +1,7 @@
 import argparse
 import logging
 import sys
-from typing import TYPE_CHECKING, List, Set, Type
+from typing import TYPE_CHECKING
 from unittest.mock import Mock, call, create_autospec
 
 import pytest
@@ -192,7 +192,7 @@ def test_setup_logging(monkeypatch: "MonkeyPatch", debug: bool) -> None:
     "severities",
     [{SeverityLevel.CRITICAL}, {SeverityLevel.CRITICAL, SeverityLevel.HIGH}],
 )
-def test_fetch_vulnerabilities(severities: Set[SeverityLevel]) -> None:
+def test_fetch_vulnerabilities(severities: set[SeverityLevel]) -> None:
     mock_vulnerabilities = [create_autospec(SecurityVulnerability) for _ in range(3)]
     mock_apis = [
         Mock(
@@ -273,9 +273,9 @@ def test_fetch_vulnerabilities(severities: Set[SeverityLevel]) -> None:
     ],
 )
 def test_filter_vulnerabilities(
-    vulnerabilities: List[SecurityVulnerability],
+    vulnerabilities: list[SecurityVulnerability],
     config: Configuration,
-    expected: List[SecurityVulnerability],
+    expected: list[SecurityVulnerability],
 ) -> None:
     assert (
         filter_vulnerabilities(config=config, vulnerabilities=vulnerabilities)
@@ -375,7 +375,7 @@ def test_filter_vulnerabilities(
     ids=["sort by package", "empty", "sub-sort by identifier"],
 )
 def test_sort_vulnerabilities(
-    vulnerabilities: List[SecurityVulnerability], expected: List[SecurityVulnerability]
+    vulnerabilities: list[SecurityVulnerability], expected: list[SecurityVulnerability]
 ) -> None:
     original_vulnerabilities = vulnerabilities.copy()
     assert sort_vulnerabilities(vulnerabilities=vulnerabilities) == expected
@@ -423,7 +423,7 @@ def test_sort_vulnerabilities(
 def test_create_header(
     monkeypatch: "MonkeyPatch",
     frozen_time: None,
-    db_names: List[str],
+    db_names: list[str],
     config: Configuration,
     expected: str,
 ) -> None:
@@ -769,7 +769,7 @@ def test_main__exception(
     mock_get_apis: Mock,
     mock_filter_vulnerabilities: Mock,
     arg_namespace: ArgumentNamespace,
-    exception_type: Type[Exception],
+    exception_type: type[Exception],
     expected_exit_code: int,
 ) -> None:
     mock_stream = Mock(isatty=Mock(return_value=True))
