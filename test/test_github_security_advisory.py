@@ -1,4 +1,4 @@
-from typing import TYPE_CHECKING, Any, Dict, List, Set
+from typing import TYPE_CHECKING, Any
 
 import pytest
 
@@ -37,7 +37,7 @@ def test_get_database_name(github_token: str) -> None:
 def test_get_vulnerabilities(
     github_token: str,
     requests_mock: "RequestsMock",
-    severities: Set[SeverityLevel],
+    severities: set[SeverityLevel],
     expected_graphql_severities: str,
 ) -> None:
     cursors = (
@@ -46,8 +46,8 @@ def test_get_vulnerabilities(
         "Y3Vyc29yOnYyOpK5MjAyMC0wOS0yNVQxOTo0MjowMCswMXowMM0DeQ==",
         "Y3Vyc29yOnYyOpK5MjAyMC0wOS0yNVQxOTo0MjowMCswMHowMM0LeQ==",
     )
-    expected_vulnerabilities: List[SecurityVulnerability] = []
-    vulnerability_nodes: List[Dict[str, Any]] = []
+    expected_vulnerabilities: list[SecurityVulnerability] = []
+    vulnerability_nodes: list[dict[str, Any]] = []
     for request_index in range(3):
         for i in range(100 if request_index < 2 else 41):
             ghsa = f"GHSA-{request_index}-{i}"
@@ -91,8 +91,9 @@ def test_get_vulnerabilities(
                                 "hasNextPage": request_index < 2,
                             },
                             "nodes": vulnerability_nodes[
-                                request_index
-                                * 100 : min(request_index * 100 + 100, 241)
+                                request_index * 100 : min(
+                                    request_index * 100 + 100, 241
+                                )
                             ],
                         }
                     }

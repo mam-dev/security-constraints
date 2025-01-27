@@ -1,8 +1,9 @@
 """Module for fetching vulnerabilities from the GitHub Security Advisory."""
+
 import logging
 import os
 import string
-from typing import TYPE_CHECKING, Any, Dict, List, Optional, Set
+from typing import TYPE_CHECKING, Any, Optional
 
 import requests
 
@@ -19,7 +20,7 @@ if TYPE_CHECKING:  # pragma: no cover
     from typing import TypedDict
 
     class _GraphQlResponseJson(TypedDict, total=False):
-        data: Dict[Any, Any]
+        data: dict[Any, Any]
 
     if sys.version_info >= (3, 10):
         from typing import TypeGuard
@@ -87,22 +88,22 @@ class GithubSecurityAdvisoryAPI(SecurityVulnerabilityDatabaseAPI):
         return "Github Security Advisory"
 
     def get_vulnerabilities(
-        self, severities: Set[SeverityLevel]
-    ) -> List[SecurityVulnerability]:
+        self, severities: set[SeverityLevel]
+    ) -> list[SecurityVulnerability]:
         """Fetch all CRITICAL vulnerabilities from GitHub Security Advisory.
 
         The SeverityLevels map trivially to GitHub's SecurityAdvisorySeverity.
 
         """
         after: Optional[str] = None
-        vulnerabilities: List[SecurityVulnerability] = []
+        vulnerabilities: list[SecurityVulnerability] = []
         more_data_exists = True
         while more_data_exists:
             json_response: "_GraphQlResponseJson" = self._do_graphql_request(
                 severities=severities, after=after
             )
             try:
-                json_data: Dict[str, Any] = json_response["data"]
+                json_data: dict[str, Any] = json_response["data"]
                 vulnerabilities.extend(
                     [
                         SecurityVulnerability(
@@ -130,7 +131,7 @@ class GithubSecurityAdvisoryAPI(SecurityVulnerabilityDatabaseAPI):
         return vulnerabilities
 
     def _do_graphql_request(
-        self, severities: Set[SeverityLevel], after: Optional[str] = None
+        self, severities: set[SeverityLevel], after: Optional[str] = None
     ) -> "_GraphQlResponseJson":
         query = QUERY_TEMPLATE.substitute(
             first=100,
